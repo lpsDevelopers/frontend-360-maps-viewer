@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, throwError, timeout } from 'rxjs';
-import { LoginResponse, ApiResponse } from '../../model/types';
+import { LoginResponse, ApiResponse } from '../../Model/types';
 
 @Injectable({
   providedIn: 'root'

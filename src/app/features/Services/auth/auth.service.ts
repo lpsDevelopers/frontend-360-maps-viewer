@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { jwtDecode } from 'jwt-decode';
-import { LoginResponse } from '../../model/types';
+import { LoginResponse } from '../../Model/types';
 import { EndpointService } from '../endpoint/endpoint.service';
-import { User } from '../../model/types';
+import { User } from '../../Model/types';
 
 interface DecodedToken {
   sub: string;

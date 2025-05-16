@@ -1,7 +1,7 @@
-import { Component } from '@angular/core';
-import { EndpointService } from '../../services/endpoint/endpoint.service';
-import { AuthService } from '../../services/auth/auth.service';
-import { User, LoginResponse } from '../../model/types';
+import { Component, OnInit } from '@angular/core';
+import { EndpointService } from '../../Services/endpoint/endpoint.service';
+import { AuthService } from '../../Services/auth/auth.service';
+import { User, LoginResponse } from '../../Model/types';
 import { jwtDecode } from 'jwt-decode';
 import { Router, ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs/operators';
@@ -11,7 +11,7 @@ import { finalize } from 'rxjs/operators';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   email: string = '';
   password: string = '';
   message: string = '';
@@ -23,10 +23,12 @@ export class LoginComponent {
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute
-  ) {
+  ) {}
+
+  ngOnInit(): void {
     // Redirigir si ya está autenticado
     if (this.authService.isAuthenticated()) {
-      this.router.navigate(['/filter']);
+      this.router.navigate(['/dashboard']); // Redirige al dashboard si ya está autenticado
     }
   }
 
@@ -45,7 +47,6 @@ export class LoginComponent {
       )
       .subscribe({
         next: (response: LoginResponse) => {
-
           this.handleSuccessfulLogin(response);
         },
         error: (error) => {
@@ -94,31 +95,25 @@ export class LoginComponent {
 
   private handleSuccessfulLogin(response: LoginResponse): void {
     try {
-      console.log('Login response:', response);
-
       if (!response.session || !response.session.access_token) {
         throw new Error('Token inválido en la respuesta');
       }
 
       const decodedToken: any = jwtDecode(response.session.access_token);
-      console.log('Decoded token:', decodedToken);
 
-      // Crear el objeto user usando los datos de la respuesta y el token decodificado
       const user: User = {
         id: response.session.user.id,
         email: this.email,
-        role: response.session.user.role,
-        email_verified: response.session.user.user_metadata.email_verified  ,
+        role: 'user',  // Si no hay rol, puedes poner un valor fijo o eliminar esta propiedad si no se usa
+        email_verified: response.session.user.user_metadata.email_verified,
       };
 
-      console.log('Mapped user:', user);
-
-      // Guardar el token y el usuario
       this.authService.setToken(response.session.access_token);
       this.authService.setCurrentUser(user);
-
       this.showSuccess('Inicio de sesión exitoso');
 
+      // ✅ Redirigir a la página principal después de login
+      this.router.navigate(['/dashboard']);
     } catch (error) {
       console.error('Error procesando login:', error);
       this.showError('Error procesando la respuesta del servidor');

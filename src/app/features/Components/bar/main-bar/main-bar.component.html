@@ -1,0 +1,60 @@
+<div class="sidebar" [ngClass]="{'expanded': isExpanded, 'collapsed': !isExpanded}">
+  <div class="sidebar-header">
+    <div *ngIf="isExpanded" class="title">Explorador</div>
+    <div *ngIf="isExpanded" class="title"></div>
+    <div class="toggle-button" (click)="toggleSidebar()">
+      <span *ngIf="isExpanded"><</span>
+      <span *ngIf="!isExpanded">></span>
+    </div>
+  </div>
+
+  <div class="sidebar-content">
+    <!-- Info de usuario -->
+    <div class="user-info">
+      <div class="user-email">juandavid.rodriguez@lpsgrupo.com</div>
+      <div class="user-actions">
+        <button class="action-button">
+          <span  *ngIf="isExpanded" class="icon-upload"></span>
+          <span *ngIf="isExpanded">Upload</span>
+        </button>
+        <button class="action-button logout">
+          <span *ngIf="isExpanded" class="icon-logout"></span>
+            <span (click)="handleLogout()" *ngIf="isExpanded">Logout</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Buscador -->
+    <div class="search-container">
+      <span class="search-icon"></span>
+      <input type="text" placeholder="Buscador..." class="search-input">
+    </div>
+
+    <!-- Elementos del menú -->
+    <div class="menu-section">
+      <div class="menu-item">
+        <span class="location-icon"></span>
+        <span class="text">Piloto Backhaul</span>
+        <span class="menu-options">⋮</span>
+      </div>
+
+      <div class="menu-item">
+        <span class="location-icon"></span>
+        <span class="text">Piloto Backhaul 2</span>
+        <span class="menu-options">⋮</span>
+      </div>
+
+      <div class="menu-item">
+        <span class="location-icon"></span>
+        <span class="text">Piloto FTTH</span>
+        <span class="menu-options">⋮</span>
+      </div>
+    </div>
+
+    <!-- Logo en la parte inferior -->
+    <div class="logo-container">
+      <img src="assets/lps-logo.svg" alt="LPS Grupo" class="logo" *ngIf="isExpanded">
+      <div *ngIf="!isExpanded" class="logo-small">LPS</div>
+    </div>
+  </div>
+</div>
