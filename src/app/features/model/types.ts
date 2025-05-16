@@ -1,24 +1,28 @@
 export interface LoginResponse {
-  isSucces: boolean;
-  message: string;
-  data: {
-    token: string;
-    role: string;
-    userId: number;
-    firstName: string;
-    lastName: string;
+  session: {
+    access_token: string;
+    refresh_token: string;
+    user: {
+      id: string;
+      email: string;
+      role: string;
+      user_metadata: {
+        email_verified: boolean;
+      }
+    }
   };
-  errors: any;
+  user: {
+    id: string;
+    email: string;
+  };
 }
 
+
 export interface User {
-  id: number;          // ID existente
-  email: string;       // Email existente
-  firstName: string;  // Remover el ? para hacerlo requerido
-  lastName: string;   // Remover el ? para hacerlo requerido
-  userId: number;      // Nuevo campo requerido
-  role: string;        // Nuevo campo requerido
-  permissions: string[]; // Nuevo campo requerido
+  id: string;
+  email: string;
+  role: string;
+  email_verified: boolean;
 }
 export interface UserAll {
   id: number;

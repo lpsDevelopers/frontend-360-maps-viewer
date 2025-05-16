@@ -1,0 +1,178 @@
+.container {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  min-height: 100vh;
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  // Eliminar z-index: -1 de aquí
+
+
+}
+.logo {
+  display: block;
+  margin: 0 auto 20px auto; /* Centra el logo y agrega espacio inferior */
+  width: 224px; /* Tamaño del logo (ajustable) */
+  height: 224px;
+}
+
+.column-middle {
+  position: relative;
+  z-index: 1; // Asegurar que está por encima del overlay
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 450px;
+  margin: 0 auto;
+}
+
+.table {
+  width: 100%;
+  padding: 2.5rem;
+  background-color: white;
+  backdrop-filter: blur(70px);
+  border-radius: 8px;
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.text {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.text-body {
+  display: block;
+
+  font-size: 1rem;
+  color: #3c3c3c;
+  margin-bottom: 0.5rem;
+  opacity: 0.9;
+}
+
+.type {
+  width: 90%;
+  padding: 12px 16px;
+  background: rgba(223, 223, 223, 0.29);
+  border: 1px solid rgb(211, 208, 208);
+  border-radius: 8px;
+  color: #3c3c3c;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+
+  &::placeholder {
+    color: rgba(154, 153, 153, 0.86);
+
+  }
+
+  &:focus {
+    border: 1px solid rgba(94, 94, 94, 0.5);
+    outline: none; /* <- evita el borde negro por defecto */
+  }
+}
+
+.title-map-explorer  {
+  text-align: center;
+  font-size: 28px;
+  font-weight: bold;
+
+}
+
+.button {
+  position: relative;
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(to right,rgb(0, 81, 255), rgb(0, 234, 234));
+  color: white;
+  border: 1px solid rgba(86, 169, 230, 0.82);
+  border-radius: 8px;
+  font-size: 1.3rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 1.5rem;
+
+  &:hover {
+    background: linear-gradient(to right,rgb(0, 81, 255), rgb(0, 234, 234));
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+
+  }
+
+  &.button-loading {
+ color: white;
+  }
+}
+
+.forgot-password {
+  color: #00b7ff;
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: block;
+  text-align: right;
+  margin-top: 0.5rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.row-family {
+  color: #ff4444;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-top: 1rem;
+  transition: all 0.3s ease;
+}
+
+.input-error {
+  border-color: #ff4444 !important;
+  background: rgba(255, 68, 68, 0.05) !important;
+}
+
+.message-error {
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid rgba(255, 68, 68, 0.2);
+  color: #ff4444;
+  padding: 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  i {
+    font-size: 16px;
+  }
+}
+
+.message-success {
+  background: rgba(0, 200, 83, 0.1);
+  border: 1px solid rgba(0, 200, 83, 0.2);
+  color: #00c853;
+  padding: 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  i {
+    font-size: 16px;
+  }
+}
+
+
