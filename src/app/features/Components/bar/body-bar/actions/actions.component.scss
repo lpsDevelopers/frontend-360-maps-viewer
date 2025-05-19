@@ -1,0 +1,36 @@
+
+.user-actions {
+  margin: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.action-button {
+  background: none;
+  border: none;
+  color: #a0a0a0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  border-radius: 3px;
+}
+
+.action-button:hover {
+  background-color: #242430;
+  color: white;
+}
+
+.logout {
+  margin-left: auto;
+}
+
+.icon-upload::before {
+  content: "⬆️";
+  margin-right: 5px;
+}
+
+.icon-logout::before {
+  content: "↪️";
+  margin-right: 5px;
+}

@@ -1,3 +1,8 @@
-<p>Explorador</p>
-<p>email</p>
-
+<div class="sidebar-header">
+  <div *ngIf="isExpanded" class="title">Explorador</div>
+  <div *ngIf="isExpanded" class="title"></div>
+  <div class="toggle-button" (click)="toggleSidebar()">
+    <span *ngIf="isExpanded"><</span>
+    <span *ngIf="!isExpanded">></span>
+  </div>
+</div>

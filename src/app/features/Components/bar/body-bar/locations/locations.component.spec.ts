@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { BodyBarComponent } from './body-bar.component';
+import { LocationsComponent } from './locations.component';
 
-describe('BodyBarComponent', () => {
-  let component: BodyBarComponent;
-  let fixture: ComponentFixture<BodyBarComponent>;
+describe('LocationsComponent', () => {
+  let component: LocationsComponent;
+  let fixture: ComponentFixture<LocationsComponent>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [BodyBarComponent]
+      declarations: [LocationsComponent]
     });
-    fixture = TestBed.createComponent(BodyBarComponent);
+    fixture = TestBed.createComponent(LocationsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

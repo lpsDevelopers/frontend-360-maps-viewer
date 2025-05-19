@@ -1,11 +1,11 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
 
 @Component({
-  selector: 'app-header-bar',
-  templateUrl: './header-bar.component.html',
-  styleUrls: ['./header-bar.component.scss']
+  selector: 'app-user-info',
+  templateUrl: './user-info.component.html',
+  styleUrls: ['./user-info.component.scss']
 })
-export class HeaderBarComponent {
+export class UserInfoComponent {
   @Input() isExpanded: boolean = true; // Recibe el estado de expansión como entrada
   @Output() toggle = new EventEmitter<void>(); // Emite un evento para alternar el estado
   @Input() email: string = ''; // Recibe el correo electrónico del componente padre
@@ -13,7 +13,4 @@ export class HeaderBarComponent {
   toggleSidebar() {
     this.toggle.emit();  // Emitir evento para que el componente padre cambie el estado
   }
-
-
-
 }

@@ -1,0 +1,10 @@
+<div class="user-actions">
+  <button class="action-button" (click)="onUpload()">
+    <span *ngIf="isExpanded" class="icon-upload"></span>
+    <span *ngIf="isExpanded">Upload</span>
+  </button>
+  <button (click)="onLogout()" class="action-button logout">
+    <span *ngIf="isExpanded" class="icon-logout"></span>
+    <span *ngIf="isExpanded">Logout</span>
+  </button>
+</div>

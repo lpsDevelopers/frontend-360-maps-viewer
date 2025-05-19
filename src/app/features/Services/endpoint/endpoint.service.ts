@@ -1,24 +1,37 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, throwError, timeout } from 'rxjs';
-import { LoginResponse, ApiResponse } from '../../Model/types';
+import {LoginResponse, ApiResponse, Locations} from '../../Model/types';
 
 @Injectable({
   providedIn: 'root'
 })
 export class EndpointService {
 
-  private readonly apiUrl = 'http://localhost:3000/api';
+  private readonly apiUrl = 'http://localhost:3002/api';
   private readonly timeoutDuration = 15000;
 
   constructor(private http: HttpClient) { }
 
   login(email: string, password: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/auth/signin`, { email, password })
+    return this.http.post<LoginResponse>(`${this.apiUrl}/authRoute/signin`, { email, password })
       .pipe(
         timeout(this.timeoutDuration),
         catchError(this.handleError)
       );
+  }
+
+  getUserLocations(): Observable<Locations[]> {
+    const url = `${this.apiUrl}/locations`;
+
+    return this.http.get<Locations[]>(url).pipe(
+      timeout(this.timeoutDuration),
+      catchError(this.handleError)
+    );
+  }
+  getLocationDetails(id: string): Observable<any> {
+    const url = `${this.apiUrl}/locations/${id}`;
+    return this.http.get<any>(url);
   }
 
   private handleError(error: HttpErrorResponse) {

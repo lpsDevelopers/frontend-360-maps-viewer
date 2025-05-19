@@ -1,0 +1,30 @@
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background-color: #16161e;
+  border-bottom: 1px solid #242430;
+  height: 50px;
+
+}
+
+.title {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.toggle-button {
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #a0a0a0;
+}
+
+.toggle-button:hover {
+  color: white;
+}

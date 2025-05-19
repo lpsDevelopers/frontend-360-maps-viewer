@@ -17,36 +17,7 @@
   width: 60px;
 }
 
-.sidebar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  background-color: #16161e;
-  border-bottom: 1px solid #242430;
-  height: 50px;
 
-}
-
-.title {
-  font-weight: bold;
-  font-size: 18px;
-}
-
-.toggle-button {
-  cursor: pointer;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: #a0a0a0;
-}
-
-.toggle-button:hover {
-  color: white;
-}
 
 .sidebar-content {
   flex: 1;
@@ -70,122 +41,8 @@
   text-overflow: ellipsis;
 }
 
-.user-actions {
-  display: flex;
-  justify-content: space-between;
-}
 
-.action-button {
-  background: none;
-  border: none;
-  color: #a0a0a0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  padding: 5px;
-  border-radius: 3px;
-}
 
-.action-button:hover {
-  background-color: #242430;
-  color: white;
-}
-
-.logout {
-  margin-left: auto;
-}
-
-.icon-upload::before {
-  content: "⬆️";
-  margin-right: 5px;
-}
-
-.icon-logout::before {
-  content: "↪️";
-  margin-right: 5px;
-}
-
-.search-container {
-  display: flex;
-  align-items: center;
-  background-color: #242430;
-  border-radius: 5px;
-  margin: 10px;
-  padding: 5px 10px;
-}
-
-.search-icon {
-  color: #a0a0a0;
-  margin-right: 5px;
-}
-
-.search-input {
-  background: none;
-  border: none;
-  color: white;
-  outline: none;
-  width: 100%;
-}
-
-.search-input::placeholder {
-  color: #a0a0a0;
-}
-
-.menu-section {
-  margin-top: 10px;
-}
-
-.menu-item {
-  display: flex;
-  align-items: center;
-  padding: 10px 15px;
-  cursor: pointer;
-  position: relative;
-}
-
-.menu-item:hover {
-  background-color: #242430;
-}
-
-.location-icon {
-  margin-right: 10px;
-  color: #a0a0a0;
-}
-
-.text {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.menu-options {
-  color: #a0a0a0;
-  cursor: pointer;
-  visibility: hidden;
-}
-
-.menu-item:hover .menu-options {
-  visibility: visible;
-}
-
-.logo-container {
-  margin-top: auto;
-  padding: 15px;
-  text-align: center;
-  border-top: 1px solid #242430;
-}
-
-.logo {
-  max-width: 100%;
-  height: auto;
-}
-
-.logo-small {
-  font-size: 24px;
-  font-weight: bold;
-  color: #00b0ff;
-}
 
 /* Estilo específico para cuando la barra está colapsada */
 .collapsed .text,
