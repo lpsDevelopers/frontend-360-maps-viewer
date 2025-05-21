@@ -23,7 +23,7 @@ export class AuthService {
   public currentUser: Observable<User | null>;
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
-
+  private readonly EMAIL_KEY = 'email';
   constructor(
     private router: Router,
     private endpointService: EndpointService
@@ -40,6 +40,12 @@ export class AuthService {
         this.handleLogout();
       }
     });
+  }
+  setEmail(email: string): void {
+    localStorage.setItem(this.EMAIL_KEY, email);
+  }
+  getEmail(): string | null {
+    return localStorage.getItem(this.EMAIL_KEY);
   }
 
   public get currentUserValue(): User | null {

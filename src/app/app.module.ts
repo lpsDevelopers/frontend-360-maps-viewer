@@ -4,6 +4,7 @@ import  { HttpClientModule } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import {FormsModule} from "@angular/forms";
 import {LoginComponent} from "./features/Auth/login/login.component";
@@ -22,6 +23,7 @@ import { ActionsComponent } from './features/Components/bar/body-bar/actions/act
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -36,7 +38,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     UserInfoComponent,
     LocationsComponent,
     ActionsComponent,
-    MapComponent
+    MapComponent,
+
   ],
   imports: [
     BrowserModule,
@@ -44,7 +47,9 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     FormsModule,
     HttpClientModule,
     BrowserAnimationsModule,
-    MatIconModule
+    MatIconModule,
+    MatProgressSpinnerModule,
+
   ],
   providers: [
     {

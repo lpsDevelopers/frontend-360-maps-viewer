@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, throwError, timeout } from 'rxjs';
-import {LoginResponse, ApiResponse, Locations} from '../../Model/types';
+import {LoginResponse, ApiResponse, Location} from '../../Model/types';
 
 @Injectable({
   providedIn: 'root'
@@ -21,16 +21,17 @@ export class EndpointService {
       );
   }
 
-  getUserLocations(): Observable<Locations[]> {
+  getLocations(): Observable<Location[]> {
     const url = `${this.apiUrl}/locations`;
 
-    return this.http.get<Locations[]>(url).pipe(
+    return this.http.get<Location[]>(url).pipe(
       timeout(this.timeoutDuration),
       catchError(this.handleError)
     );
   }
-  getLocationDetails(id: string): Observable<any> {
-    const url = `${this.apiUrl}/locations/${id}`;
+
+  getPanoramas(id: string): Observable<any> {
+    const url = `${this.apiUrl}/panoramas?location_id=${id}`;
     return this.http.get<any>(url);
   }
 

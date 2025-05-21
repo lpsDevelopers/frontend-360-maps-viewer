@@ -49,7 +49,7 @@ export interface ApiResponse<T> {
   errors: ErrorDetail[] | null;
 }
 
-export interface Locations {
+export interface Location {
   id: string;
   name: string;
   description: string | null;

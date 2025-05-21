@@ -107,12 +107,11 @@ export class LoginComponent implements OnInit {
         role: 'user',  // Si no hay rol, puedes poner un valor fijo o eliminar esta propiedad si no se usa
         email_verified: response.session.user.user_metadata.email_verified,
       };
-
+      localStorage.setItem('email', this.email);
       this.authService.setToken(response.session.access_token);
       this.authService.setCurrentUser(user);
       this.showSuccess('Inicio de sesión exitoso');
 
-      // ✅ Redirigir a la página principal después de login
       this.router.navigate(['/dashboard']);
     } catch (error) {
       console.error('Error procesando login:', error);

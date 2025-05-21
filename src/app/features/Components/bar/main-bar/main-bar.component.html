@@ -1,7 +1,7 @@
 <div class="sidebar" [ngClass]="{'expanded': isExpanded, 'collapsed': !isExpanded}">
   <app-header-bar [isExpanded]="isExpanded" (toggle)="toggleSidebar()"></app-header-bar>
   <app-user-info
-    [email]="'juandavid.rodriguez@lpsgrupo.com'"
+    [email]="email"
     [isExpanded]="isExpanded"
     (logout)="handleLogout()">
   </app-user-info>

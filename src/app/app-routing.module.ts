@@ -8,16 +8,15 @@ import { MapComponent } from './features/Components/map/map.component';
 import { AuthGuard } from './guards/auth.guard';
 
 const routes: Routes = [
-  { path: '', redirectTo: '/login', pathMatch: 'full' }, // Redirige al login si la ruta está vacía
-  { path: 'login', component: LoginComponent },  // Ruta de login
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent },
   {
     path: 'dashboard',
     component: DashboardComponent,
-    canActivate: [AuthGuard],  // Aquí se protege la ruta con el guard
+    canActivate: [AuthGuard],
   },
-  // Si intentan ir a una ruta que no existe, se redirige al login
+  { path: 'map/:id', component:  DashboardComponent },
   { path: '**', redirectTo: '/login' },
-  { path: 'map/:id', component: MapComponent },  // Aquí es donde estamos configurando la ruta
 ];
 
 @NgModule({

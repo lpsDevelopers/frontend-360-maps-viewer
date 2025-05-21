@@ -79,3 +79,45 @@
   font-weight: bold;
   color: #00b0ff;
 }
+
+.menu-section {
+  padding: 8px 0;
+}
+
+
+/* Estilos para el contenedor de carga */
+.loading-container {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  justify-content: center;
+
+  mat-spinner {
+    margin-right: 16px;
+  }
+}
+
+/* Estilos para mensajes de error */
+.error-message {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  color: #f44336;
+
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
+/* Estilos para cuando no hay datos */
+.no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  color: rgba(0, 0, 0, 0.54);
+
+  mat-icon {
+    margin-right: 8px;
+  }
+}
