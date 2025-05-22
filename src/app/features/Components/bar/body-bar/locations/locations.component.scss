@@ -121,3 +121,10 @@
     margin-right: 8px;
   }
 }
+
+.menu-item.selected {
+  pointer-events: none;  /* bloquea más clics en este elemento */
+  opacity: 0.6;          /* apariencia de bloqueado */
+  user-select: none;
+  background-color: rgba(101, 101, 101, 0.44);
+}

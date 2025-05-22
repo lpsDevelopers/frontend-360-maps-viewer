@@ -22,8 +22,9 @@
 
     <div class="menu-item"
          *ngFor="let location of locations"
-         (click)="onLocationClick(location.id); onPanoramaClick(location.id);  onCoordinatesClick(location.latitude, location.longitude)"
-         [class.menu-item-collapsed]="!isExpanded">
+         (click)="onMenuItemClick(location)"
+         [class.menu-item-collapsed]="!isExpanded"
+         [class.selected]="selectedLocationId === location.id">
       <mat-icon>location_on</mat-icon>
       <span class="text" *ngIf="isExpanded">{{ location.name }}</span>
       <div class="menu-options" *ngIf="isExpanded">⋮</div>

@@ -55,7 +55,21 @@ export class LocationsComponent implements OnInit, OnDestroy {
         }
       });
   }
+  selectedLocationId: string | null = null;
 
+  onMenuItemClick(location: Location): void {
+    if (this.selectedLocationId === location.id) {
+      // Ya está seleccionado, no hacer nada
+      return;
+    }
+
+    // Cambia la selección al nuevo elemento
+    this.selectedLocationId = location.id;
+
+    // Ejecuta las acciones necesarias
+    this.onPanoramaClick(location.id);
+    this.onCoordinatesClick(location.latitude, location.longitude);
+  }
   onPanoramaClick(locationid: string): void {
     this.locationsService.setPanoramaForLocationId(locationid);
 
