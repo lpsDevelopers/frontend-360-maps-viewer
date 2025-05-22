@@ -16,6 +16,7 @@ const routes: Routes = [
     canActivate: [AuthGuard],
   },
   { path: 'map/:id', component:  DashboardComponent },
+  { path: 'map-test/:id', component:  DashboardComponent },
   { path: '**', redirectTo: '/login' },
 ];
 

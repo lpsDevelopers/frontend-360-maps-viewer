@@ -56,12 +56,17 @@ export class LocationsComponent implements OnInit, OnDestroy {
       });
   }
 
+  onPanoramaClick(locationid: string): void {
+    this.locationsService.setPanoramaForLocationId(locationid);
+
+  }
+
   onLocationClick(locationId: string): void {
     console.log(`Se ha hecho clic en la ubicación con ID: ${locationId}`);
     this.locationsService.setSelectedLocationId(locationId);
-
+    this.locationsService.setPanoramaForLocationId(locationId);
     this.router.navigate(['/map', locationId]).then(success => {
-      console.log("Navegación exitosa a /map", success);
+        console.log("Navegación exitosa a /map", success);
     }).catch(error => {
       console.error("Error en la navegación:", error);
     });

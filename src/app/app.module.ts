@@ -21,7 +21,7 @@ import { UserInfoComponent } from './features/Components/bar/body-bar/user-info/
 import { LocationsComponent } from './features/Components/bar/body-bar/locations/locations.component';
 import { ActionsComponent } from './features/Components/bar/body-bar/actions/actions.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-
+import {MapTestComponent} from "./features/Components/map-test/map-test.component";
 
 
 @NgModule({
@@ -39,6 +39,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     LocationsComponent,
     ActionsComponent,
     MapComponent,
+    MapTestComponent
 
   ],
   imports: [

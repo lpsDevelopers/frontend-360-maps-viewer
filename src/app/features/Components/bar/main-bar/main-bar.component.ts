@@ -42,6 +42,6 @@ export class MainBarComponent implements OnInit {
 
   handleLogout() {
     console.log('Logout clicked');
-    this.authService.logout();  // Llama al método del servicio
+    this.authService.logout();
   }
 }

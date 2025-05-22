@@ -22,7 +22,7 @@
 
     <div class="menu-item"
          *ngFor="let location of locations"
-         (click)="onLocationClick(location.id);  onCoordinatesClick(location.latitude, location.longitude)"
+         (click)="onLocationClick(location.id); onPanoramaClick(location.id);  onCoordinatesClick(location.latitude, location.longitude)"
          [class.menu-item-collapsed]="!isExpanded">
       <mat-icon>location_on</mat-icon>
       <span class="text" *ngIf="isExpanded">{{ location.name }}</span>

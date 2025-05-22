@@ -1,18 +1,17 @@
-
-import {Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef} from '@angular/core';
-import * as L from 'leaflet';
-import { EndpointService } from "../../Services/endpoint/endpoint.service";
-import { Router } from "@angular/router";
+import { Component, OnDestroy, AfterViewInit, OnInit, ChangeDetectorRef } from '@angular/core';
+import * as L from "leaflet";
+import { Subject, takeUntil } from "rxjs";
 import { LocationsService } from "../../Services/locations/locations.service";
-import { Subject, takeUntil } from 'rxjs';
-import {MarkerService, Panorama} from "../../Services/marker/marker.service";
+import { Router } from "@angular/router";
+import { MarkerService, Panorama } from "../../Services/marker/marker.service";
+import { EndpointService } from "../../Services/endpoint/endpoint.service";
 
 @Component({
-  selector: 'app-map',
-  templateUrl: './map.component.html',
-  styleUrls: ['./map.component.scss']
+  selector: 'app-map-test',
+  templateUrl: './map-test.component.html',
+  styleUrls: ['./map-test.component.scss']
 })
-export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
+export class MapTestComponent implements OnInit, AfterViewInit, OnDestroy {
   private map: L.Map | null = null;
   private destroy$ = new Subject<void>();
   private currentMarker: L.Marker | null = null;
@@ -31,8 +30,6 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit(): void {
     // Suscribirse a cambios de coordenadas
-
-
     this.locationsService.getCoordinatesObservable()
       .pipe(takeUntil(this.destroy$))
       .subscribe(coords => {
@@ -58,11 +55,15 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this.initMap();
+    setTimeout(() => {
+      this.initMap();
 
-    if (this.currentLocationId) {
-      this.loadPanoramasForLocation(this.currentLocationId);
-    }
+      setTimeout(() => {
+        if (this.currentLocationId) {
+          this.loadPanoramasForLocation(this.currentLocationId);
+        }
+      }, 500);
+    }, 100);
   }
 
   ngOnDestroy(): void {
@@ -98,9 +99,9 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
         this.cdr.detectChanges();
 
 
-
-        this.updatePanoramaMarkers();
-
+        setTimeout(() => {
+          this.updatePanoramaMarkers();
+        }, 100);
       },
       error: (error) => {
         console.error('❌ Error al cargar panoramas:', error);
@@ -142,11 +143,11 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       if (panorama.latitude && panorama.longitude) {
 
         const marker = L.circleMarker([panorama.latitude, panorama.longitude], {
-          radius: 3, //
-          color: 'rgb(37,127,255)', //
+          radius: 3,
+          color: 'rgb(37,127,255)',
           fillColor: 'rgba(239,239,239,0)',
-          fillOpacity: 0.1, //
-          weight: 4, //
+          fillOpacity: 0.1,
+          weight: 4,
           opacity: 1
         })
           .bindPopup(`
@@ -296,5 +297,4 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
 
   }
 }
-
 
