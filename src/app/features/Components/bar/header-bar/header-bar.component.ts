@@ -14,5 +14,4 @@ export class HeaderBarComponent {
   toggleSidebar() {
     this.toggle.emit();  // Emitir evento para que el componente padre cambie el estado
   }
-
 }

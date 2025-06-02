@@ -78,7 +78,6 @@ export class LoginComponent implements OnInit {
       this.showError('Por favor, ingrese un email válido');
       return false;
     }
-
     return true;
   }
 
@@ -95,23 +94,13 @@ export class LoginComponent implements OnInit {
 
   private handleSuccessfulLogin(response: LoginResponse): void {
     try {
-      if (!response.session || !response.session.access_token) {
-        throw new Error('Token inválido en la respuesta');
+      if (!response.isSucces || !response.data || typeof response.data !== 'string') {
+        throw new Error('Token no válido en la respuesta');
       }
 
-      const decodedToken: any = jwtDecode(response.session.access_token);
+      this.authService.login(response); // solo esto
 
-      const user: User = {
-        id: response.session.user.id,
-        email: this.email,
-        role: 'user',  // Si no hay rol, puedes poner un valor fijo o eliminar esta propiedad si no se usa
-        email_verified: response.session.user.user_metadata.email_verified,
-      };
-      localStorage.setItem('email', this.email);
-      this.authService.setToken(response.session.access_token);
-      this.authService.setCurrentUser(user);
       this.showSuccess('Inicio de sesión exitoso');
-
       this.router.navigate(['/dashboard']);
     } catch (error) {
       console.error('Error procesando login:', error);

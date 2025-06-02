@@ -5,15 +5,11 @@ import { Observable } from 'rxjs';
 import { PopupService } from "../popup/popup.service";
 
 export interface Panorama {
-  id: string;
-  location_id: string;
+  id: number;
+  location_id: number;
   filename: string;
   title: string;
   description: string;
-  created_at: string;
-  updated_at: string;
-  other_field_1: string;
-  other_field_2: string;
 
   latitude: number;   // <-- nueva propiedad
   longitude: number;  // <-- nueva propiedad

@@ -10,7 +10,7 @@ interface DecodedToken {
   sub: string;
   given_name: string;
   family_name: string;
-  role: string;
+  role: number;
   Permission: string[];
   exp: number;
 }
@@ -23,6 +23,7 @@ export class AuthService {
   public currentUser: Observable<User | null>;
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
+
   private readonly EMAIL_KEY = 'email';
   constructor(
     private router: Router,
@@ -41,12 +42,6 @@ export class AuthService {
       }
     });
   }
-  setEmail(email: string): void {
-    localStorage.setItem(this.EMAIL_KEY, email);
-  }
-  getEmail(): string | null {
-    return localStorage.getItem(this.EMAIL_KEY);
-  }
 
   public get currentUserValue(): User | null {
     return this.currentUserSubject.value;
@@ -61,22 +56,23 @@ export class AuthService {
   }
 
   login(response: any): void {
-    const { token, id, firstName, lastName, role } = response.data;
-    const decodedToken = jwtDecode<DecodedToken>(token);
+    const token = response.data;
+    const decodedToken: any = jwtDecode(token);
 
     const user: User = {
-      id: decodedToken.sub,  // ID del usuario desde el token
-      email: response.data.email,  // Email del response
-
-      role: decodedToken.role,  // Role extraído del token
-
-      email_verified: response.data.email_verified || false,  // Verificación de email (según el backend)
+      id: parseInt(decodedToken.sub, 10),
+      email: decodedToken.email,
+      role: decodedToken.role === 'Admin' ? 1 : 0,
+      email_verified: decodedToken.email_verified === 'True',
+      password_hash: '',
+      company_id: Number(decodedToken.company_id)  // Aquí debe tener 1, no 0
     };
 
     this.setToken(token);
     this.setCurrentUser(user);
     this.isAuthenticatedSubject.next(true);
   }
+
 
   logout(): void {
     localStorage.setItem('logout-event', Date.now().toString());
@@ -90,6 +86,14 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
+  setEmail(email: string): void {
+    localStorage.setItem(this.EMAIL_KEY, email);
+  }
+
+  getEmail(): string | null {
+    return localStorage.getItem(this.EMAIL_KEY);
+  }
+
   setToken(token: string): void {
     localStorage.setItem('token', token);
   }
@@ -101,6 +105,7 @@ export class AuthService {
   private removeToken(): void {
     localStorage.removeItem('token');
   }
+
 
   setCurrentUser(user: User): void {
     this.currentUserSubject.next(user);
