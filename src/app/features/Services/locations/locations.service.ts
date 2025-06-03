@@ -18,7 +18,14 @@ export class LocationsService {
     this.loadInitialCoordinates();
     this.loadInitialPanorama();
   }
+  setLocations(locations: Location[]): void {
+    localStorage.setItem('locations', JSON.stringify(locations));
+  }
 
+  getLocations(): Location[] | null {
+    const stored = localStorage.getItem('locations');
+    return stored ? JSON.parse(stored) : null;
+  }
   // ============= MÉTODOS DE UBICACIÓN COMPLETA =============
   setSelectedLocation(location: Location): void {
     try {
@@ -183,5 +190,7 @@ export class LocationsService {
       console.error('Error al cargar coordenadas del localStorage:', error);
       return null;
     }
+
   }
+
 }

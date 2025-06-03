@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError, forkJoin } from 'rxjs';
 import { catchError, timeout, tap, switchMap } from 'rxjs/operators';
-import { LoginResponse, ApiResponse, Location, Panorama } from '../../Model/types';
+import {LoginResponse, ApiResponse, Location, Panorama, User} from '../../Model/types';
 
 @Injectable({
   providedIn: 'root'
@@ -24,7 +24,14 @@ export class EndpointService {
         catchError(this.handleError)
       );
   }
-
+  userLogin(email: string): Observable<ApiResponse<User>> {
+    return this.http.get<ApiResponse<User>>(`${this.apiUrl}/User/userEmail`, { params: { email: email } })
+      .pipe(
+        timeout(this.timeoutDuration),
+        catchError(this.handleError)
+      );
+  }
+  
   getLocations(): Observable<ApiResponse<Location[]>>{
     return this.http.get<ApiResponse<Location[]>>(`${this.apiUrl}/locations`)
       .pipe(

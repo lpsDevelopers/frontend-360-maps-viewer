@@ -9,9 +9,9 @@ export interface User {
   id: number;
   email: string;
   role: number;
-  email_verified: boolean;
-  password_hash: string;
-  company_id: number;
+  emailVerified: boolean;
+  passwordHash: string;
+  companyId: number;
 }
 
 export interface ApiResponse<T> {
@@ -27,7 +27,7 @@ export interface Location {
   description: string | null;
   latitude: number;
   longitude: number;
-  company_id: number;
+  companyId: number;
 }
 
 export interface Panorama {
@@ -42,7 +42,9 @@ export interface Panorama {
 }
 
 
-
+export interface UserEmailToken {
+  email: string;
+}
 
 
 export interface ErrorDetail {

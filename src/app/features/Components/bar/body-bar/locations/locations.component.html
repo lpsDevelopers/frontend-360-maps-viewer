@@ -5,64 +5,99 @@
     <button
       class="toggle-btn"
       (click)="onToggleExpanded()"
-      [attr.aria-expanded]="isExpanded">
-      <i class="icon" [class]="isExpanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+      [attr.aria-expanded]="isExpanded"
+      [attr.aria-label]="isExpanded ? 'Contraer ubicaciones' : 'Expandir ubicaciones'"
+      type="button">
+      <i class="icon"
+         [class]="isExpanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"
+         [attr.aria-hidden]="true"></i>
     </button>
   </div>
 
   <!-- Content -->
-  <div class="locations-content" *ngIf="isExpanded">
+  <div class="locations-content"
+       *ngIf="isExpanded"
+       [@slideToggle]="isExpanded">
 
-    <!-- Loading State -->
-    <div *ngIf="loading$ | async" class="loading-container">
-      <div class="spinner"></div>
-      <p>Cargando ubicaciones...</p>
-    </div>
+    <!-- Combined async pipe for better performance -->
+    <ng-container *ngIf="locationsState$ | async as state">
 
-    <!-- Error State -->
-    <div *ngIf="error$ | async as error" class="error-container">
-      <div class="error-message">
-        <i class="fas fa-exclamation-triangle"></i>
-        <p>{{ error }}</p>
-      </div>
-      <button class="retry-btn" (click)="retryLoad()">
-        <i class="fas fa-redo"></i>
-        Reintentar
-      </button>
-    </div>
-
-    <!-- Locations List -->
-    <div *ngIf="locations$ | async as locations" class="locations-list">
-
-      <!-- Empty State -->
-      <div *ngIf="locations.length === 0 && !(loading$ | async) && !(error$ | async)"
-           class="empty-state">
-        <i class="fas fa-map-marker-alt"></i>
-        <p>No hay ubicaciones disponibles</p>
+      <!-- Loading State -->
+      <div *ngIf="state.loading" class="loading-container" role="status" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Cargando ubicaciones...</p>
       </div>
 
-      <!-- Locations Items -->
-      <button
-        class="location-item"
-        *ngFor="let location of locations; trackBy: trackByLocationId"
-        (click)="onLocationClick(location)"
-        [attr.data-location-id]="location.id"
-        [class.active]="selectedLocationId === location.id"
-        type="button"
-      >
-        <div class="location-info">
-          <h4 class="location-name">{{ location.name }}</h4>
-          <div class="location-details">
-            <span class="company-id" *ngIf="location.company_id">
-          <i class="fas fa-building"></i>
-              {{ location.company_id }}
-          </span>
+      <!-- Error State -->
+      <div *ngIf="state.error && !state.loading"
+           class="error-container"
+           role="alert"
+           aria-live="assertive">
+        <div class="error-message">
+          <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+          <p>{{ state.error }}</p>
+        </div>
+        <button class="retry-btn"
+                (click)="retryLoad()"
+                type="button"
+                [attr.aria-label]="'Reintentar carga de ubicaciones'">
+          <i class="fas fa-redo" aria-hidden="true"></i>
+          <span>Reintentar</span>
+        </button>
+      </div>
+
+      <!-- Content when not loading -->
+      <div *ngIf="!state.loading && !state.error" class="locations-list">
+
+        <!-- Empty State -->
+        <div *ngIf="state.locations.length === 0"
+             class="empty-state"
+             role="status">
+          <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+          <p>No hay ubicaciones disponibles</p>
+          <small>Contacta al administrador si esto es un error</small>
+        </div>
+
+        <!-- Locations Items -->
+        <ng-container *ngIf="state.locations.length > 0">
+
+          <div class="locations-grid" role="list">
+            <button
+              class="location-item"
+              *ngFor="let location of state.locations; trackBy: trackByLocationId; let i = index"
+              (click)="onLocationClick(location)"
+              (keydown.enter)="onLocationClick(location)"
+
+              [attr.data-location-id]="location.id"
+              [class.active]="selectedLocationId === location.id"
+              [attr.aria-pressed]="selectedLocationId === location.id"
+              [attr.aria-label]="'Seleccionar ubicación ' + location.name"
+              role="listitem"
+              tabindex="0"
+              type="button">
+
+              <div class="location-info">
+                <h4 class="location-name">{{ location.name }}</h4>
+
+                <div class="location-details">
+
+
+
+
+                  <span class="company-info">
+                    <i class="fas fa-building" aria-hidden="true"></i>
+                    Company ID: {{ location.companyId }}
+                  </span>
+                </div>
               </div>
-        </div>
-        <div class="location-actions">
-          <i class="fas fa-chevron-right"></i>
-        </div>
-      </button>
-    </div>
+
+              <div class="location-actions">
+                <i class="fas fa-chevron-right" aria-hidden="true"></i>
+              </div>
+            </button>
+          </div>
+        </ng-container>
+      </div>
+    </ng-container>
   </div>
 </div>
