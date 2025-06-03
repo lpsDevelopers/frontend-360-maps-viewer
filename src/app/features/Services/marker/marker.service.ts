@@ -6,15 +6,16 @@ import { PopupService } from "../popup/popup.service";
 
 export interface Panorama {
   id: number;
-  location_id: number;
+  locationId: number;    // usa camelCase para que coincida con la respuesta JSON
   filename: string;
   title: string;
   description: string;
-
-  latitude: number;   // <-- nueva propiedad
-  longitude: number;  // <-- nueva propiedad
+  address: string;
+  viewerUrl: string;
+  thumbnail: string;
+  latitude: number;
+  longitude: number;
 }
-
 @Injectable({
   providedIn: 'root'
 })

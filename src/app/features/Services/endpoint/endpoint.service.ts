@@ -31,7 +31,7 @@ export class EndpointService {
         catchError(this.handleError)
       );
   }
-  
+
   getLocations(): Observable<ApiResponse<Location[]>>{
     return this.http.get<ApiResponse<Location[]>>(`${this.apiUrl}/locations`)
       .pipe(

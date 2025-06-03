@@ -22,6 +22,7 @@ import { LocationsComponent } from './features/Components/bar/body-bar/locations
 import { ActionsComponent } from './features/Components/bar/body-bar/actions/actions.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {MapTestComponent} from "./features/Components/map-test/map-test.component";
+import { PanoramaViewerComponent } from './panorama-viewer/panorama-viewer.component';
 
 
 @NgModule({
@@ -39,7 +40,8 @@ import {MapTestComponent} from "./features/Components/map-test/map-test.componen
     LocationsComponent,
     ActionsComponent,
     MapComponent,
-    MapTestComponent
+    MapTestComponent,
+    PanoramaViewerComponent
 
   ],
   imports: [

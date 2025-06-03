@@ -6,6 +6,7 @@ import { LocationsService } from "../../Services/locations/locations.service";
 import { Subject, takeUntil } from 'rxjs';
 import {MarkerService, Panorama} from "../../Services/marker/marker.service";
 import {ApiResponse} from "../../Model/types";
+import {PopupService} from "../../Services/popup/popup.service";
 
 @Component({
   selector: 'app-map-test',
@@ -25,7 +26,8 @@ export class MapTestComponent implements OnInit, OnDestroy, AfterViewInit {
     private endpointService: EndpointService,
     private router: Router,
     private markerService: MarkerService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private popupService: PopupService
   ) {}
 
   ngOnInit(): void {
@@ -124,22 +126,27 @@ export class MapTestComponent implements OnInit, OnDestroy, AfterViewInit {
         lng: panorama.longitude
       });
 
-      if (panorama.latitude && panorama.longitude) {
+      if (panorama.latitude !== undefined && panorama.latitude !== null &&
+        panorama.longitude !== undefined && panorama.longitude !== null) {
+
+        // Crear objeto con los datos esperados por el PopupService
+        const popupData = {
+          name: panorama.filename || 'Panorama sin título',
+          state: panorama.viewerUrl || 'Estado desconocido',
+          population: 'N/A',
+          thumbnail: panorama.thumbnail  // <--- Añadir esto
+        };
+
         const marker = L.circleMarker([panorama.latitude, panorama.longitude], {
-          radius: 3,
+          radius: 8,
           color: 'rgb(37,127,255)',
           fillColor: 'rgba(239,239,239,0)',
           fillOpacity: 0.1,
           weight: 4,
           opacity: 1
         })
-          .bindPopup(`
-            <div>
-              <h4>${panorama.title || 'Panorama sin título'}</h4>
-              <p>Lat: ${panorama.latitude}</p>
-              <p>Lng: ${panorama.longitude}</p>
-            </div>
-          `)
+          .bindPopup(this.popupService.makeCapitalPopup(popupData))
+
           .on('click', () => {
             console.log('Panorama clickeado:', panorama);
           });
@@ -205,7 +212,7 @@ export class MapTestComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private initMap(): void {
     const coords = this.getStoredCoordinates();
-    const center = coords.isValid ? [coords.lat, coords.lng] : [39.8282, -98.5795];
+    const center = coords.isValid ? [coords.lat, coords.lng] : [9.8282, -9.5795];
 
     if (this.map) {
       this.map.remove();
