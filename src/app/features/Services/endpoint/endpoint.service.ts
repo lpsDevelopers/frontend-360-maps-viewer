@@ -56,7 +56,7 @@ export class EndpointService {
       )
   }
 
-  getPanoramasForLocation(Id: number ): Observable<ApiResponse<Panorama>> {
+  getPanoramasForLocation(Id: number): Observable<ApiResponse<Panorama>> {
     return this.http.get<ApiResponse<Panorama>>(`${this.apiUrl}/panoramas/location/${Id}`)
       .pipe(
         timeout(this.timeoutDuration),
@@ -72,31 +72,14 @@ export class EndpointService {
       )
   }
 
-  getPanoramas(id: number ): Observable<ApiResponse<Panorama[]>> {
-    if (this.panoramasCache.has(id.toString())) {
-      console.log(` Panoramas cacheados para locationId ${id} encontrados, retornando cache.`);
-      return of(this.panoramasCache.get(id.toString())!);
-    }
 
-    const url = `${this.apiUrl}/panoramas?location_id=${id}`;
-    return this.http.get<ApiResponse<Panorama[]>>(url).pipe(
-      timeout(this.timeoutDuration),
-      tap(panoramas => {
-        this.panoramasCache.set(id.toString(), panoramas);
-        console.log(` Panoramas cacheados para locationId ${id}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
-
-
-  preloadAllPanoramas(): Observable<ApiResponse<Panorama[]>[]> {
+  preloadAllPanoramas(): Observable<ApiResponse<Panorama>[]> {
     return this.getLocations().pipe(
       switchMap(response => {
         if (!response.isSucces || !response.data.length) {
-          return of<ApiResponse<Panorama[]>[]>([]);
+          return of<ApiResponse<Panorama>[]>([]);
         }
-        const requests = response.data.map(loc => this.getPanoramas(loc.id));
+        const requests = response.data.map(loc => this.getPanoramasForLocation(loc.id));
         return forkJoin(requests);
       })
     );

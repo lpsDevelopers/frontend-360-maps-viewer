@@ -6,7 +6,7 @@ import { LoginComponent } from './features/Auth/login/login.component';
 import { DashboardComponent } from './features/Pages/dashboard/dashboard.component';
 import { MapComponent } from './features/Components/map/map.component';
 import { AuthGuard } from './guards/auth.guard';
-import {PanoramaViewerComponent} from "./panorama-viewer/panorama-viewer.component";
+
 
 const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -18,8 +18,7 @@ const routes: Routes = [
   },
   { path: 'map/:id', component:  DashboardComponent },
   { path: 'map-test/:id', component:  DashboardComponent },
-  { path: '**', redirectTo: '/login' },
-  { path: 'viewer/:id', component: PanoramaViewerComponent }
+  { path: '**', redirectTo: '/login' }
 
 ];
 

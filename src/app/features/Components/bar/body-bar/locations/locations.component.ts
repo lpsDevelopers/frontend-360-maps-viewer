@@ -97,7 +97,7 @@ export class LocationsComponent implements OnInit, OnDestroy {
     if (location.latitude && location.longitude) {
       this.locationService.setCoordinates(location.latitude, location.longitude);
     }
-
+    this.locationService.setPanoramaForLocationId(location.id);
     this.locationSelected.emit(location);
   }
 

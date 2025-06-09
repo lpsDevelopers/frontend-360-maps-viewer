@@ -1,5 +1,5 @@
 
-import {Component} from '@angular/core';
+import {AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit} from '@angular/core';
 
 
 @Component({
@@ -7,7 +7,7 @@ import {Component} from '@angular/core';
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.scss']
 })
-export class MapComponent  {
+export class MapComponent   {
 
 }
 

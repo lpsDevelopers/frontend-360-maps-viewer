@@ -34,7 +34,6 @@
               "src/styles.scss"
             ],
             "scripts": [
-              "./node_modules/pannellum/build/pannellum.js"
             ]
           },
           "configurations": {
@@ -102,9 +101,7 @@
             ],
             "styles": [
               "@angular/material/prebuilt-themes/indigo-pink.css",
-              "src/styles.scss",
-              "./node_modules/pannellum/build/pannellum.css"
-
+              "src/styles.scss"
             ],
             "scripts": []
           }
