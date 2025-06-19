@@ -2,9 +2,16 @@
   <div class="column-middle">
     <div class="table">
       <div>
-        <img  class="logo"  src="./assets/images/logo.webp">
-        <h1 class="title-map-explorer" > 360 Map explorer</h1>
+        <img class="logo" src="./assets/images/logo.webp" />
+        <h1 class="title-map-explorer">360 Map explorer</h1>
       </div>
+
+      <!-- Loader local dentro del form -->
+      <div *ngIf="isLoading" class="local-loader">
+        <!-- Aquí pones un spinner o mensaje -->
+        <p>Cargando...</p>
+      </div>
+
       <form (ngSubmit)="login()" #loginForm="ngForm">
         <div class="form-group">
           <label class="text-body">Email</label>
@@ -16,7 +23,9 @@
             [class.input-error]="messageType === 'error'"
             placeholder="ejemplo@email.com"
             required
-            email>
+            email
+            [disabled]="isLoading"
+          />
         </div>
         <div class="form-group">
           <label class="text-body">Password</label>
@@ -27,13 +36,22 @@
             name="password"
             [class.input-error]="messageType === 'error'"
             placeholder="••••••••"
-            required>
+            required
+            [disabled]="isLoading"
+          />
         </div>
-        <div *ngIf="message"
-             [ngClass]="{'message-error': messageType === 'error',
-                                'message-success': messageType === 'success'}"
-             class="row-family">
-          <i *ngIf="messageType === 'error'" class="fas fa-exclamation-circle"></i>
+        <div
+          *ngIf="message"
+          [ngClass]="{
+            'message-error': messageType === 'error',
+            'message-success': messageType === 'success'
+          }"
+          class="row-family"
+        >
+          <i
+            *ngIf="messageType === 'error'"
+            class="fas fa-exclamation-circle"
+          ></i>
           <i *ngIf="messageType === 'success'" class="fas fa-check-circle"></i>
           {{ message }}
         </div>
@@ -42,12 +60,12 @@
           class="button"
           type="submit"
           [disabled]="isLoading || !email || !password"
-          [class.button-loading]="isLoading">
+          [class.button-loading]="isLoading"
+        >
           <span *ngIf="!isLoading">Login</span>
-          <span *ngIf="isLoading" >Ingresando...</span>
+          <span *ngIf="isLoading">Ingresando...</span>
         </button>
       </form>
     </div>
   </div>
 </div>
-

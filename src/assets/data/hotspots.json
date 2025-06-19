@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "label": "Entrada principal",
+    "theta": 45,
+    "phi": 20
+  },
+  {
+    "id": 2,
+    "label": "Pasillo norte",
+    "theta": 90,
+    "phi": 10
+  },
+  {
+    "id": 3,
+    "label": "Sala de exposición",
+    "theta": 180,
+    "phi": 30
+  },
+  {
+    "id": 4,
+    "label": "Sala de exposición",
+    "theta": 380,
+    "phi": 50
+  }
+]

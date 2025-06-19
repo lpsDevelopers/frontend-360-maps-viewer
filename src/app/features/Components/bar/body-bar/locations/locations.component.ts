@@ -1,21 +1,6 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  Output,
-  OnInit,
-  OnDestroy
-} from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-  BehaviorSubject,
-  Observable,
-  Subject,
-  map,
-  takeUntil,
-  catchError,
-  of
-} from 'rxjs';
+import { BehaviorSubject, Observable, Subject, map, takeUntil, catchError, of } from 'rxjs';
 
 import { EndpointService } from '../../../../Services/endpoint/endpoint.service';
 import { AuthService } from '../../../../Services/auth/auth.service';
@@ -39,7 +24,7 @@ export class LocationsComponent implements OnInit, OnDestroy {
   @Output() locationSelected = new EventEmitter<Location>();
 
   selectedLocationId: number | null = null;
-
+  isLocationClicked = false;
   // Reactive state management
   private readonly destroy$ = new Subject<void>();
   private readonly stateSubject = new BehaviorSubject<LocationsState>({
@@ -75,14 +60,30 @@ export class LocationsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-
     const savedLocations = this.getLocations();
     if (savedLocations && savedLocations.length > 0) {
       this.updateState({ locations: savedLocations, loading: false, error: null });
+
+      // Recuperar la ubicación seleccionada guardada
+      this.selectedLocationId = this.getSelectedLocationId();
+
+      // Si tienes la ubicación seleccionada, cargar sus detalles
+      if (this.selectedLocationId) {
+        const selectedLocation = savedLocations.find(loc => loc.id === this.selectedLocationId);
+        if (selectedLocation) {
+          this.locationService.setSelectedLocationId(this.selectedLocationId);
+          if (selectedLocation.latitude && selectedLocation.longitude) {
+            this.locationService.setCoordinates(selectedLocation.latitude, selectedLocation.longitude);
+          }
+          this.locationService.setPanoramaForLocationId(this.selectedLocationId);
+          this.locationSelected.emit(selectedLocation);
+        }
+      }
     }
 
     this.subscribeToUserChanges();
   }
+
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -90,8 +91,13 @@ export class LocationsComponent implements OnInit, OnDestroy {
   }
 
   onLocationClick(location: Location): void {
-    console.log('Ubicación seleccionada:', location);
+    if (this.selectedLocationId === location.id) {
+      return; // No hacer nada si ya está seleccionado
+    }
+
     this.selectedLocationId = location.id;
+    this.setSelectedLocationId(location.id); // Guardar en localStorage
+
     this.locationService.setSelectedLocationId(location.id);
 
     if (location.latitude && location.longitude) {
@@ -173,8 +179,18 @@ export class LocationsComponent implements OnInit, OnDestroy {
         }
       });
   }
+  setSelectedLocationId(id: number | null): void {
+    if (id === null) {
+      localStorage.removeItem('selectedLocationId');
+    } else {
+      localStorage.setItem('selectedLocationId', id.toString());
+    }
+  }
 
-
+  getSelectedLocationId(): number | null {
+    const stored = localStorage.getItem('selectedLocationId');
+    return stored ? +stored : null;
+  }
   private updateState(partialState: Partial<LocationsState>): void {
     const currentState = this.stateSubject.value;
     const newState = { ...currentState, ...partialState };

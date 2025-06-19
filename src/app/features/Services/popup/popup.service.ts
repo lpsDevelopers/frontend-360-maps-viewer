@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import * as L from 'leaflet';
 
 @Injectable({
   providedIn: 'root'
@@ -7,13 +8,24 @@ export class PopupService {
 
   constructor() { }
 
-  makeCapitalPopup(data: { name: string; thumbnail?: string }): string {
+  makeCapitalPopup(data: { address: string; name: string; thumbnail?: string }): string {
     return `
-    <div style="text-align:center">
-      ${data.thumbnail ? `<img src="${data.thumbnail}" alt="Vista previa" style="width:100px; height:auto; margin-bottom:8px;" />` : ''}
-      <div><strong>Nombre:</strong> ${data.name}</div>
-      <div><em>Haz clic para ver en 360°</em></div>
-    </div>
-  `;
+      <div style="text-align:center">
+        <div><strong>Nombre:</strong> ${data.address}</div>
+
+      </div>
+    `;
+  }
+  addHoverBehavior(marker: L.CircleMarker, popupContent: string): void {
+    marker.on('mouseover', () => {
+      if (!marker.getPopup()) {
+        marker.bindPopup(popupContent);
+      }
+      marker.openPopup();
+    });
+
+    marker.on('mouseout', () => {
+      marker.closePopup();
+    });
   }
 }

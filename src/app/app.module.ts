@@ -5,7 +5,6 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-
 import {FormsModule} from "@angular/forms";
 import {LoginComponent} from "./features/Auth/login/login.component";
 import { AuthInterceptor } from "./guards/auth.interceptors";
@@ -22,8 +21,13 @@ import { LocationsComponent } from './features/Components/bar/body-bar/locations
 import { ActionsComponent } from './features/Components/bar/body-bar/actions/actions.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {MapTestComponent} from "./features/Components/map-test/map-test.component";
-
-
+import { VrComponent } from './features/Components/viewer/vr/vr.component';
+import { HomeComponent } from './features/Components/viewer/home/home.component';
+import { LoaderComponent } from "./features/Components/loader/loader.component";
+import { CommonModule } from '@angular/common';
+import { LoaderCubeComponent } from "./features/Components/loader-cube/loader-cube.component";
+import {HotspotComponent} from "./features/Components/viewer/hotspot/hotspot.component";
+import {HotspotTooltipComponent} from "./features/Components/viewer/hotspot-tooltip/hotspot-tooltip.component";
 
 @NgModule({
   declarations: [
@@ -41,8 +45,12 @@ import {MapTestComponent} from "./features/Components/map-test/map-test.componen
     ActionsComponent,
     MapComponent,
     MapTestComponent,
-
-
+    VrComponent,
+    HomeComponent,
+    LoaderComponent,
+    LoaderCubeComponent,
+    HotspotComponent,
+    HotspotTooltipComponent
   ],
   imports: [
     BrowserModule,
@@ -52,7 +60,7 @@ import {MapTestComponent} from "./features/Components/map-test/map-test.componen
     BrowserAnimationsModule,
     MatIconModule,
     MatProgressSpinnerModule,
-
+    CommonModule,
   ],
   providers: [
     {

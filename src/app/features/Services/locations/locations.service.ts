@@ -95,6 +95,7 @@ export class LocationsService {
     console.log('Panorama guardado:', id);
   }
 
+
   getPanoramaForLocationId(): number | null {
     const value = localStorage.getItem(this.PANORAMA_KEY);
     if (!value) {

@@ -1,0 +1,15 @@
+<div class="container dynamicHeight">
+  <div class="header">
+    <h1>360° VR Image Viewer</h1>
+    <h2>Click 'Launch' and use default image, or upload your own!</h2>
+  </div>
+
+  <div *ngFor="let panorama of panoramas">
+    <p class="panorama-id" >{{panorama.id}}</p>
+    <p class="panorama-address" >{{ panorama.address }}</p>
+    <button class="btn" (click)="onLaunchClick(panorama.id)">
+      Launch
+    </button>
+  </div>
+
+</div>

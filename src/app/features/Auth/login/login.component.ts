@@ -5,6 +5,7 @@ import { User, LoginResponse } from '../../Model/types';
 import { jwtDecode } from 'jwt-decode';
 import { Router, ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs/operators';
+import {LoadingService} from "../../Services/loading/loading.service";
 
 @Component({
   selector: 'app-login',
@@ -17,16 +18,18 @@ export class LoginComponent implements OnInit {
   message: string = '';
   isLoading: boolean = false;
   messageType: 'error' | 'success' | '' = '';
-
+  loading = false;
   constructor(
     private endPointService: EndpointService,
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    public loadingService: LoadingService
   ) {}
 
   ngOnInit(): void {
     // Redirigir si ya está autenticado
+
     if (this.authService.isAuthenticated()) {
       this.router.navigate(['/dashboard']); // Redirige al dashboard si ya está autenticado
     }
@@ -37,12 +40,15 @@ export class LoginComponent implements OnInit {
 
     if (!this.validateForm()) return;
 
+
+    this.loadingService.show();
     this.startLogin();
 
     this.endPointService.login(this.email, this.password)
       .pipe(
         finalize(() => {
           this.isLoading = false;
+          this.loadingService.hide();
         })
       )
       .subscribe({

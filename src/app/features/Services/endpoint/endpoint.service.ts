@@ -24,6 +24,7 @@ export class EndpointService {
         catchError(this.handleError)
       );
   }
+
   userLogin(email: string): Observable<ApiResponse<User>> {
     return this.http.get<ApiResponse<User>>(`${this.apiUrl}/User/userEmail`, { params: { email: email } })
       .pipe(
@@ -71,7 +72,6 @@ export class EndpointService {
         catchError(this.handleError)
       )
   }
-
 
   preloadAllPanoramas(): Observable<ApiResponse<Panorama>[]> {
     return this.getLocations().pipe(
