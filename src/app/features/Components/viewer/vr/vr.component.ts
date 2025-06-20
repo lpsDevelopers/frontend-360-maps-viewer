@@ -148,8 +148,6 @@ export class VrComponent implements OnInit, OnDestroy {
         console.log('[VR Component] Evento panoramaSyncService recibido:', changeEvent);
         if (changeEvent && changeEvent.panoramaId !== this.currentPanoramaId) {
           console.log('[VR Component] Cambio de panorama recibido desde:', changeEvent.source);
-
-
           if (changeEvent.source === 'map') {
             this.router.navigate(['/vr', changeEvent.panoramaId]);
           } else {
@@ -165,8 +163,6 @@ export class VrComponent implements OnInit, OnDestroy {
       // Buscar próximo panorama según click y orientación actual
       console.log('panoramaId actual en click:', this.panoramaId);
       const nextPanorama = this.geoUtils.findNextPanoramaFromClick(
-
-
       this.panoramaId,
         {x: position.x, y: position.y, z: position.z},
         cameraOrientation
@@ -185,13 +181,10 @@ export class VrComponent implements OnInit, OnDestroy {
 
     // Notificamos al servicio
     this.panoramaSyncService.changePanorama(id, null, 'vr');
-
-
   }
 
   initVr( id: number ): void {
     this.panoramaSyncService.changePanorama(id, null, 'vr');
-
   }
 
   someMethodWhereYouEvaluateDirection() {

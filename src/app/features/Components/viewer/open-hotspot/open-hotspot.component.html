@@ -1,0 +1,95 @@
+<!-- open-hotspot.component.html -->
+<div class="hotspot-bar"
+     *ngIf="visible"
+     [@slideIn]
+     (click)="$event.stopPropagation()">
+
+  <!-- Header -->
+  <div class="header">
+    <h2 class="title">{{ modalData.label || 'Información del Hotspot' }}</h2>
+    <button class="close-button"
+            (click)="closeBar()"
+            aria-label="Cerrar panel"
+            title="Cerrar">
+      ×
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+    <!-- Basic Information -->
+    <section class="info-section">
+      <h3>Información General</h3>
+      <div class="info-item" *ngIf="modalData.description">
+        <span class="label">Descripción:</span>
+        <span class="value">{{ modalData.description }}</span>
+      </div>
+      <div class="info-item" *ngIf="modalData.equipment_location">
+        <span class="label">Ubicación del Equipo:</span>
+        <span class="value">{{ modalData.equipment_location }}</span>
+      </div>
+      <div class="info-item" *ngIf="modalData.identifier">
+        <span class="label">Identificador:</span>
+        <span class="value">{{ modalData.identifier }}</span>
+      </div>
+      <div class="info-item" *ngIf="modalData.project">
+        <span class="label">Proyecto:</span>
+        <span class="value">{{ modalData.project }}</span>
+      </div>
+    </section>
+
+    <!-- Address Information -->
+    <section class="info-section">
+      <h3>Dirección</h3>
+      <div class="info-item">
+        <span class="label">Dirección Completa:</span>
+        <span class="value">{{ getFullAddress() }}</span>
+      </div>
+      <div class="info-item" *ngIf="modalData.postal_code">
+        <span class="label">Código Postal:</span>
+        <span class="value">{{ modalData.postal_code }}</span>
+      </div>
+    </section>
+
+    <!-- Coordinates -->
+    <section class="info-section">
+      <h3>Coordenadas</h3>
+      <div class="coordinates-grid">
+        <div class="info-item">
+          <span class="label">Latitud:</span>
+          <span class="value">{{ formatCoordinate(modalData.latitude) }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Longitud:</span>
+          <span class="value">{{ formatCoordinate(modalData.longitude) }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Additional Information -->
+    <section class="info-section" *ngIf="modalData.registration_date || modalData.additional_notes">
+      <h3>Información Adicional</h3>
+      <div class="info-item" *ngIf="modalData.registration_date">
+        <span class="label">Fecha de Registro:</span>
+        <span class="value">{{ formatDate(modalData.registration_date) }}</span>
+      </div>
+      <div class="info-item" *ngIf="modalData.additional_notes">
+        <span class="label">Notas:</span>
+        <span class="value notes">{{ modalData.additional_notes }}</span>
+      </div>
+    </section>
+
+    <!-- Actions -->
+    <section class="actions-section">
+      <button class="action-btn primary" (click)="closeBar()">
+        Cerrar
+      </button>
+    </section>
+  </div>
+</div>
+
+<!-- Overlay -->
+<div class="overlay"
+     *ngIf="visible"
+     (click)="closeBar()"
+     [@slideIn]></div>

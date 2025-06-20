@@ -4,8 +4,9 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { ApiService } from "../api/api.service";
 import { Hotspot } from "../../../Model/types";
 import {WebGLRenderer} from "three";
-import {ModalService} from "../modal/modal.service";
+import {ModalData, ModalService} from "../modal/modal.service";
 import {Subject} from "rxjs";
+import {OpenHotspotService} from "../openHotspot/open-hotspot.service";
 
 @Injectable({
   providedIn: 'root',
@@ -27,7 +28,11 @@ export class VrThreeService implements OnDestroy {
   private orientationHandler: ((event: DeviceOrientationEvent) => void) | undefined;
   private changeModeButton: HTMLElement | null = null;
   private clickHandler: ((event: MouseEvent) => void) | undefined;
+
+  private leftDoubleClickInHotspotsHandler : ((event: MouseEvent) => void) | undefined;
+
   private rightClickHandler: ((event: MouseEvent) => void) | undefined; // Nuevo handler
+
   private resizeHandler: (() => void) | undefined;
   private animationId: number | undefined;
   private tooltipCallback?: (x: number, y: number, label: string) => void;
@@ -40,7 +45,11 @@ export class VrThreeService implements OnDestroy {
   private creationMode = false;
   private tempHotspot: THREE.Mesh | null = null;
 
-  constructor(private apiService: ApiService, private modalService: ModalService) {
+  constructor(
+    private apiService: ApiService,
+    private modalService: ModalService,
+    private openHotspotService: OpenHotspotService
+  ) {
     this.renderer = new WebGLRenderer();
   }
 
@@ -192,6 +201,67 @@ export class VrThreeService implements OnDestroy {
     const mouse = new THREE.Vector2();
     const tooltip = document.getElementById('hotspot-tooltip');
 
+    this.leftDoubleClickInHotspotsHandler = ( event: MouseEvent) => {
+
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+
+      const intersectsHotspots = raycaster.intersectObjects(this.markers);
+
+      if (intersectsHotspots.length > 0) {
+        this.modalService.openModal$.subscribe(isOpen => {
+          if (isOpen) {
+            // Modal abierto: remover hover y ocultar tooltip
+            if (this.hoverHandler && this.renderer?.domElement) {
+              this.renderer.domElement.removeEventListener('mousemove', this.hoverHandler);
+            }
+            if (this.tooltipCallback) {
+              this.tooltipCallback(0, 0, ''); // ocultar tooltip
+            }
+          } else {
+            // Modal cerrado: volver a añadir hover
+            if (this.hoverHandler && this.renderer?.domElement) {
+              this.renderer.domElement.addEventListener('mousemove', this.hoverHandler);
+            }
+          }
+        });
+        const hotspot = intersectsHotspots[0].object;
+        console.log('HostPot Seleccionado: ', hotspot);
+
+        // En lugar del alert, abres el modal con datos del hotspot
+        this.modalService.openModal({
+          id: hotspot.userData['id'] ?? 0,
+          label: hotspot.userData['label'] ?? 'Sin etiqueta',
+          description: hotspot.userData['description'] ?? '',
+          locationId: hotspot.userData['locationId'] ?? 0,
+          equipment_location: hotspot.userData['equipment_location'] ?? '',
+          street_name: hotspot.userData['street_name'] ?? '',
+          street_number: hotspot.userData['street_number'] ?? '',
+          province: hotspot.userData['province'] ?? '',
+          locality: hotspot.userData['locality'] ?? '',
+          postal_code: hotspot.userData['postal_code'] ?? '',
+          identifier: hotspot.userData['identifier'] ?? '',
+          project: hotspot.userData['project'] ?? '',
+          new_equipment_location: hotspot.userData['new_equipment_location'] ?? '',
+          assigned_to: hotspot.userData['assigned_to'] ?? '',
+          location_details: hotspot.userData['location_details'] ?? '',
+          repair_type: hotspot.userData['repair_type'] ?? '',
+          repair_type_2: hotspot.userData['repair_type_2'] ?? '',
+          registration_date: hotspot.userData['registration_date'] ?? '',
+          latitude: hotspot.userData['latitude'] ?? 0,
+          longitude: hotspot.userData['longitude'] ?? 0,
+          additional_notes: hotspot.userData['additional_notes'] ?? '',
+          other_repair_type_1: hotspot.userData['other_repair_type_1'] ?? '',
+          other_repair_type_2: hotspot.userData['other_repair_type_2'] ?? '',
+          theta: hotspot.userData['theta'] ?? 0,
+          phi: hotspot.userData['phi'] ?? 0,
+        });
+        return;
+      }
+    }
+
     this.rightClickHandler = ( event: MouseEvent)=> {
       mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -259,6 +329,7 @@ export class VrThreeService implements OnDestroy {
       const intersectsSphere = raycaster.intersectObject(this.sphereMesh);
       if (intersectsSphere.length > 0) {
         const point = intersectsSphere[0].point;
+
         const radius = 5;
         const x = point.x;
         const y = point.y;
@@ -290,16 +361,13 @@ export class VrThreeService implements OnDestroy {
         if (intersectsSphere.length > 0) {
           const clickPosition = intersectsSphere[0].point;
           const cameraOrientation = this.getCameraOrientation(camera);
-          this.sphereClickSubject.next({
-            position: clickPosition,
+          this.sphereClickSubject.next({position: clickPosition,
             cameraOrientation
           });
         }
       }
+
     };
-
-    // Nuevo handler para click derecho
-
 
     // Añadir los event listeners
     if (this.renderer) {
@@ -384,39 +452,8 @@ export class VrThreeService implements OnDestroy {
   }
 
   // Nuevo método para crear hotspot temporal
-  private openHotspot(position: THREE.Vector3) {
-    if (!this.scene) return;
 
-    // Remover hotspot temporal anterior si existe
-    this.removeTempHotspot();
 
-    // Calcular theta y phi desde la posición
-    const { theta, phi } = this.cartesianToSpherical(position);
-
-    // Crear hotspot temporal con color diferente (amarillo para indicar que es temporal)
-    const geometry = new THREE.SphereGeometry(0.12, 16, 16);
-    const material = new THREE.MeshBasicMaterial({
-      color: 0xffff00, // Amarillo para hotspot temporal
-      transparent: true,
-      opacity: 0.8
-    });
-
-    this.tempHotspot = new THREE.Mesh(geometry, material);
-    this.tempHotspot.position.copy(position);
-    this.tempHotspot.userData = {
-      label: 'Nuevo Hotspot',
-      theta: theta,
-      phi: phi,
-      isTemp: true
-    };
-
-    this.scene.add(this.tempHotspot);
-
-    // Abrir modal para configurar el hotspot
-    this.openHotspotModal(theta, phi);
-
-    console.log(`Hotspot temporal creado en θ=${theta.toFixed(2)}°, φ=${phi.toFixed(2)}°`);
-  }
 
   // Método para remover hotspot temporal
   private removeTempHotspot() {
@@ -428,30 +465,7 @@ export class VrThreeService implements OnDestroy {
     }
   }
 
-  // Método para confirmar la creación del hotspot
-  confirmHotspotCreation(hotspotData: any) {
-    if (!this.tempHotspot || !this.scene) return;
 
-    // Convertir el hotspot temporal en permanente
-    const geometry = new THREE.SphereGeometry(0.1, 16, 16);
-    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Rojo para hotspot permanente
-
-    const permanentHotspot = new THREE.Mesh(geometry, material);
-    permanentHotspot.position.copy(this.tempHotspot.position);
-    permanentHotspot.userData = {
-      label: hotspotData.label || 'Nuevo Hotspot',
-      theta: this.tempHotspot.userData['theta'],
-      phi: this.tempHotspot.userData['phi'],
-      id: hotspotData.id || Date.now() // ID temporal si no viene del backend
-    };
-
-    // Remover temporal y añadir permanente
-    this.removeTempHotspot();
-    this.scene.add(permanentHotspot);
-    this.markers.push(permanentHotspot);
-
-    console.log('Hotspot creado permanentemente:', permanentHotspot.userData);
-  }
 
   // Método para cancelar la creación del hotspot
   cancelHotspotCreation() {
@@ -459,8 +473,10 @@ export class VrThreeService implements OnDestroy {
     console.log('Creación de hotspot cancelada');
   }
 
-  // Método para abrir modal de configuración
-  private openHotspotModal(theta: number, phi: number) {
+
+
+  private openHotspotBar(theta: number, phi: number) {
+
     const modalData = {
       id: 0,
       label: '',
@@ -489,7 +505,7 @@ export class VrThreeService implements OnDestroy {
       phi: phi,
     };
 
-    this.modalService.openModal(modalData);
+    this.openHotspotService.openBar(modalData);
   }
 
   // Método utilitario para convertir coordenadas cartesianas a esféricas
@@ -677,15 +693,54 @@ export class VrThreeService implements OnDestroy {
   //Doble click al hotspot
   private onHotspotClick(hotspot: THREE.Mesh) {
     const label = (hotspot.userData as { label: string }).label;
-    console.log('Hotspot seleccionado:', label);
+    console.log('Hotspot seleccionado: amarillo', label);
+
     // Restaurar color del hotspot previamente seleccionado
     if (this.selectedHotspot && this.selectedHotspot !== hotspot) {
       (this.selectedHotspot.material as THREE.MeshBasicMaterial).color.set(0xff0000);
     }
+
     // Pintar el nuevo hotspot como seleccionado
     (hotspot.material as THREE.MeshBasicMaterial).color.set(0xffff00);
+
     // Actualizar la referencia
     this.selectedHotspot = hotspot;
+
+    // **NUEVA PARTE: Abrir el bar con los datos del hotspot**
+    const hotspotData: ModalData = {
+      id: hotspot.userData['id']|| 0,
+      label: hotspot.userData['label'] || '',
+      description: hotspot.userData['description'] || '',
+      locationId: hotspot.userData['locationId'] || 0,
+      equipment_location: hotspot.userData['equipment_location'] || '',
+      street_name: hotspot.userData['street_name'] || '',
+      street_number: hotspot.userData['street_number'] || '',
+      province: hotspot.userData['province'] || '',
+      locality: hotspot.userData['locality'] || '',
+      postal_code: hotspot.userData['postal_code'] || '',
+      identifier: hotspot.userData['identifier'] || '',
+      project: hotspot.userData['project'] || '',
+      new_equipment_location: hotspot.userData['new_equipment_location'] || '',
+      assigned_to: hotspot.userData['assigned_to'] || '',
+      location_details: hotspot.userData['location_details'] || '',
+      repair_type: hotspot.userData['repair_type'] || '',
+      repair_type_2: hotspot.userData['repair_type_2'] || '',
+      registration_date: hotspot.userData['registration_date'] || '',
+      latitude: hotspot.userData['latitude'] || 0,
+      longitude: hotspot.userData['longitude'] || 0,
+      additional_notes: hotspot.userData['additional_notes'] || '',
+      other_repair_type_1: hotspot.userData['other_repair_type_1'] || '',
+      other_repair_type_2: hotspot.userData['other_repair_type_2'] || '',
+      theta: hotspot.userData['theta'] || 0,
+      phi: hotspot.userData['phi'] || 0,
+    };
+
+    try {
+      const openBar = this.openHotspotService.openBar(hotspotData);
+      console.log('Hotspot seleccionado: amarillo', openBar);
+    } catch (error) {
+      console.error('Error al abrir el bar con los datos del hotspot:', error);
+    }
   }
 
   updatePanoramaTexture(imageUrl: string): void {

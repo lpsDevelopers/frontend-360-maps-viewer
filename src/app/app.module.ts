@@ -1,12 +1,12 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import  { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import {FormsModule} from "@angular/forms";
-import {LoginComponent} from "./features/Auth/login/login.component";
+import { FormsModule } from "@angular/forms";
+import { LoginComponent } from "./features/Auth/login/login.component";
 import { AuthInterceptor } from "./guards/auth.interceptors";
 import { HTTP_INTERCEPTORS } from "@angular/common/http";
 import { MainPageComponent } from './features/Pages/main-page/main-page.component';
@@ -20,14 +20,15 @@ import { UserInfoComponent } from './features/Components/bar/body-bar/user-info/
 import { LocationsComponent } from './features/Components/bar/body-bar/locations/locations.component';
 import { ActionsComponent } from './features/Components/bar/body-bar/actions/actions.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import {MapTestComponent} from "./features/Components/map-test/map-test.component";
+import { MapTestComponent } from "./features/Components/map-test/map-test.component";
 import { VrComponent } from './features/Components/viewer/vr/vr.component';
 import { HomeComponent } from './features/Components/viewer/home/home.component';
 import { LoaderComponent } from "./features/Components/loader/loader.component";
 import { CommonModule } from '@angular/common';
 import { LoaderCubeComponent } from "./features/Components/loader-cube/loader-cube.component";
-import {HotspotComponent} from "./features/Components/viewer/hotspot/hotspot.component";
-import {HotspotTooltipComponent} from "./features/Components/viewer/hotspot-tooltip/hotspot-tooltip.component";
+import { HotspotComponent } from "./features/Components/viewer/hotspot/hotspot.component";
+import { HotspotTooltipComponent } from "./features/Components/viewer/hotspot-tooltip/hotspot-tooltip.component";
+import { OpenHotspotComponent } from './features/Components/viewer/open-hotspot/open-hotspot.component';
 
 @NgModule({
   declarations: [
@@ -50,7 +51,8 @@ import {HotspotTooltipComponent} from "./features/Components/viewer/hotspot-tool
     LoaderComponent,
     LoaderCubeComponent,
     HotspotComponent,
-    HotspotTooltipComponent
+    HotspotTooltipComponent,
+    OpenHotspotComponent
   ],
   imports: [
     BrowserModule,
