@@ -1,0 +1,24 @@
+.dashboard-container {
+  display: flex;
+  height: 100vh; // Usar toda la altura de la pantalla
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 220px;
+  background-color: #1e1e2f;
+  color: #fff;
+  flex-shrink: 0;
+  border-right: 1px solid #2c2c3c;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.main-content {
+  flex: 1;
+  background-color: #f4f6f9;
+  padding: 20px;
+  overflow-y: auto;
+}

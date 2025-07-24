@@ -1,7 +1,7 @@
 <div class="locations-container" [class.expanded]="isExpanded">
   <!-- Header -->
   <div class="locations-header">
-    <h3>Ubicaciones</h3>
+    <h3 class="title-map" >Ubicaciones</h3>
     <button
       class="toggle-btn"
       (click)="onToggleExpanded()"
@@ -59,34 +59,44 @@
 
         <!-- Locations Items -->
         <ng-container *ngIf="state.locations.length > 0">
-
-          <div class="locations-grid" role="list">
-            <button
-              class="location-item"
-              *ngFor="let location of state.locations; trackBy: trackByLocationId; let i = index"
-              (click)="onLocationClick(location)"
-              (keydown.enter)="onLocationClick(location)"
-              [attr.data-location-id]="location.id"
-              [class.active]="selectedLocationId === location.id"
-              [attr.aria-pressed]="selectedLocationId === location.id"
-              [attr.aria-label]="'Seleccionar ubicación ' + location.name"
-              role="listitem"
-              tabindex="0"
-              type="button">
-              <div class="location-info">
-                <h4 class="location-name">{{ location.name }}</h4>
-                <div class="location-details">
-                  <span class="company-info">
-                    <i class="fas fa-building" aria-hidden="true"></i>
-                    Company ID: {{ location.companyId }}
-                  </span>
+          <div class="locations-wrapper" role="list">
+            <div class="location-container" *ngFor="let location of state.locations; trackBy: trackByLocationId; let i = index">
+              <!-- Location Button -->
+              <button
+                class="location-item"
+                (click)="onLocationClick(location)"
+                (keydown.enter)="onLocationClick(location)"
+                [attr.data-location-id]="location.id"
+                [class.active]="selectedLocationId === location.id"
+                [attr.aria-pressed]="selectedLocationId === location.id"
+                [attr.aria-label]="'Seleccionar ubicación ' + location.name"
+                role="listitem"
+                tabindex="0"
+                type="button">
+                <div class="location-info">
+                  <h4 class="location-name">{{ location.name }}</h4>
+                  <div class="location-details">
+                    <span class="company-info">
+                      <i class="fas fa-building" aria-hidden="true"></i>
+                      Company ID: {{ location.companyId }}
+                    </span>
+                  </div>
                 </div>
-              </div>
+                <div class="location-actions">
+                  <i class="fas fa-chevron-right" [class.rotated]="selectedLocationId === location.id" aria-hidden="true"></i>
+                </div>
+              </button>
 
-              <div class="location-actions">
-                <i class="fas fa-chevron-right" aria-hidden="true"></i>
+              <!-- CSV Component - Solo visible para la ubicación seleccionada -->
+              <div class="csv-section" *ngIf="selectedLocationId === location.id" [@slideInOut]>
+                <app-csv-locations
+                  [map]="mapReference"
+                  [locationId]="selectedLocationId"
+                  (csvLoaded)="onCsvLoaded($event, location)"
+                  (csvError)="onCsvError($event, location)">
+                </app-csv-locations>
               </div>
-            </button>
+            </div>
           </div>
         </ng-container>
       </div>

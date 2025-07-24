@@ -1,0 +1,79 @@
+<div class="login-container">
+  <div class="login-card">
+    <!-- Header -->
+    <div class="login-header">
+      <h2>Acceso Administrativo</h2>
+      <p>Panel de control</p>
+    </div>
+
+    <!-- Formulario -->
+    <form (ngSubmit)="login()" #loginForm="ngForm" class="login-form">
+      <!-- Message display -->
+      <div *ngIf="message" [class]="'message-box ' + messageType">
+        <i class="fas" [class.fa-exclamation-circle]="messageType === 'error'"
+           [class.fa-check-circle]="messageType === 'success'"></i>
+        {{ message }}
+      </div>
+
+      <!-- Email field -->
+      <div class="form-group">
+        <label for="email">Correo Administrativo</label>
+        <div class="input-wrapper">
+          <i class="fas fa-envelope"></i>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            [(ngModel)]="email"
+            required
+            email
+            placeholder="admin@ejemplo.com"
+            [class.invalid]="loginForm.submitted && emailInput.invalid"
+            #emailInput="ngModel">
+        </div>
+        <div *ngIf="loginForm.submitted && emailInput.invalid" class="validation-error">
+          <span *ngIf="emailInput.errors?.['required']">El correo es requerido</span>
+          <span *ngIf="emailInput.errors?.['email']">Ingresa un correo válido</span>
+        </div>
+      </div>
+
+      <!-- Password field -->
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <div class="input-wrapper">
+          <i class="fas fa-lock"></i>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            [(ngModel)]="password"
+            required
+            minlength="6"
+            placeholder="••••••••"
+            [class.invalid]="loginForm.submitted && passwordInput.invalid"
+            #passwordInput="ngModel">
+        </div>
+        <div *ngIf="loginForm.submitted && passwordInput.invalid" class="validation-error">
+          <span *ngIf="passwordInput.errors?.['required']">La contraseña es requerida</span>
+          <span *ngIf="passwordInput.errors?.['minlength']">Mínimo 6 caracteres</span>
+        </div>
+      </div>
+
+      <!-- Submit button -->
+      <button type="submit" [disabled]="isLoading" class="login-button">
+        <span *ngIf="!isLoading">Acceder al Panel</span>
+        <div *ngIf="isLoading" class="spinner"></div>
+      </button>
+
+      <!-- Forgot password link -->
+      <div class="forgot-password">
+        <a routerLink="/auth/admin/forgot-password">¿Olvidaste tu contraseña?</a>
+      </div>
+    </form>
+
+    <!-- Footer -->
+    <div class="login-footer">
+      <a routerLink="/auth/user/login" class="admin-link">Volver al acceso de usuario</a>
+    </div>
+  </div>
+</div>

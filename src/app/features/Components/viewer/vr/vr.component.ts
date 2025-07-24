@@ -207,7 +207,7 @@ export class VrComponent implements OnInit, OnDestroy {
   }
   private reinitializeVrViewer(panoramaId: number): void {
     console.log('[VrComponent] Reinicializando visor VR completamente para panorama:', panoramaId);
-
+    this.vrThreeService.resetCurrentPanorama();
 
     this.vrThreeService.cleanup?.(); // Si tienes un método de limpieza
 
@@ -269,31 +269,40 @@ export class VrComponent implements OnInit, OnDestroy {
     // Cargar la imagen del panorama
     this.apiService.getPanoramaById(panoramaId).subscribe({
       next: (response) => {
-        const viewerUrl = response?.data?.viewerUrl;
-
+        const viewerUrl = response?.data?.thumbnail;
         // Base URL si viewerUrl es relativa
         const baseUrl = 'https://piloto360.s3.amazonaws.com';
-
         // Asegurarse de que sea una URL completa
         this.apiService.selectedImageUrl = viewerUrl?.startsWith('http')
           ? viewerUrl
           : viewerUrl?.trim()
             ? `${baseUrl}/${viewerUrl}`
-            : '/assets/default.jpg';
+            : '/assets/defauuuuuult.jpg';
 
         console.log('[VR Component] Imagen seleccionada:', this.apiService.selectedImageUrl);
 
-        // Actualizar la escena VR con la nueva imagen
-        this.vrThreeService.updatePanoramaTexture(this.apiService.selectedImageUrl);
+        // MODIFICACIÓN: Pasar panoramaId al actualizar textura
+        this.vrThreeService.updatePanoramaTexture(
+          this.apiService.selectedImageUrl,
+          panoramaId  // <- NUEVO PARÁMETRO
+        );
+
         this.isVrReady = true;
-        console.log('[VR Component] Panorama texture actualizada');
+        console.log('[VR Component] Panorama texture actualizada con hotspots específicos');
       },
       error: (error) => {
         console.error('[VR Component] Error al cargar panorama:', error);
         this.apiService.selectedImageUrl = '/assets/default.jpg';
-        this.vrThreeService.updatePanoramaTexture(this.apiService.selectedImageUrl);
+        this.vrThreeService.updatePanoramaTexture(
+          this.apiService.selectedImageUrl,
+          panoramaId
+        );
       }
     });
+
+    this.apiService.getPostesByPanorama(panoramaId).subscribe({
+
+    })
   }
 
   OnfullScreenService() {

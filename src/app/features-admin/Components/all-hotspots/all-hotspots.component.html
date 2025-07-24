@@ -1,0 +1,438 @@
+<div class="list-container">
+  <div *ngIf="loading" class="loading-spinner"><div class="spinner"></div></div>
+  <div *ngIf="error" class="error-message">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ error }}
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-toolbar">
+    <button
+      (click)="onOpenModal()"
+      class="brand-text-2">Agregar Registros</button>
+    <div class="filters-section">
+      <input
+        type="text"
+        [(ngModel)]="filters.id"
+        (input)="applyFilters()"
+        placeholder="Buscar ID"
+      />
+      <input
+        type="text"
+        [(ngModel)]="filters.item"
+        (input)="applyFilters()"
+        placeholder="Buscar Item"
+      />
+      <input
+        type="text"
+        [(ngModel)]="filters.codigoPosteAntiguo"
+        (input)="applyFilters()"
+        placeholder="Buscar Código Poste Antiguo"
+      />
+      <input
+        type="text"
+        [(ngModel)]="filters.urbanizacion"
+        (input)="applyFilters()"
+        placeholder="Buscar Urbanización"
+      />
+    </div>
+  </div>
+
+  <div class="export-buttons">
+    <button class="export-btn" (click)="exportToExcel()">
+      Exportar en Excel
+    </button>
+    <button class="export-btn" (click)="exportToCSV()">
+      Exportar en Csv
+    </button>
+  </div>
+
+  <!-- Tabla -->
+  <table *ngIf="!loading && !error && filteredHotspots.length > 0" class="factor-table">
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Item</th>
+      <th>Código Poste Antiguo</th>
+      <th>Pitch</th>
+      <th>Yaw</th>
+      <th>Theta</th>
+      <th>Phi</th>
+      <th>Tipo Poste</th>
+      <th>Criticidad</th>
+      <th>Red</th>
+      <th>Tipo Red</th>
+      <th>Altura Soporte</th>
+      <th>Altura Vano</th>
+      <th>Código Distrito</th>
+      <th>Tipo Vía</th>
+      <th>Nombre Vía</th>
+      <th>Número</th>
+      <th>Manzana</th>
+      <th>Lote</th>
+      <th>Coordenadas</th>
+      <th>Latitud S</th>
+      <th>Longitud W</th>
+      <th>Urbanización</th>
+      <th>Poste Siguiente</th>
+      <th>Observación 1</th>
+      <th>Observación 2</th>
+      <th>Observación 3</th>
+      <th>Condición</th>
+      <th>Trabajo a Realizar</th>
+      <th>Panoramas ID</th>
+      <th>View Capture Path</th>
+      <th>File Path 1</th>
+      <th>File Path 2</th>
+      <th>File Path 3</th>
+      <th>Acciones</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let hs of filteredHotspots; let i = index" [class.editing]="editingRowIndex === i">
+      <td>{{ hs.id }}</td>
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else itemView"
+               [(ngModel)]="hs.item"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #itemView>{{ hs.item }}</ng-template>
+      </td>
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else codigoView"
+               [(ngModel)]="hs.codigoPosteAntiguo"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #codigoView>{{ hs.codigoPosteAntiguo }}</ng-template>
+      </td>
+
+      <!-- Pitch -->
+      <td>
+        <input *ngIf="editingRowIndex === i; else pitchView"
+               [(ngModel)]="hs.pitch"
+               class="inline-edit-input"
+               type="number">
+        <ng-template #pitchView>{{ hs.pitch }}</ng-template>
+      </td>
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else yawView"
+               [(ngModel)]="hs.yaw"
+               class="inline-edit-input"
+               type="number">
+        <ng-template #yawView>{{ hs.yaw }}</ng-template>
+      </td>
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else thetaView"
+               [(ngModel)]="hs.theta"
+               class="inline-edit-input"
+               type="number">
+        <ng-template #thetaView>{{ hs.theta }}</ng-template>
+      </td>
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else phiView"
+               [(ngModel)]="hs.phi"
+               class="inline-edit-input"
+               type="number">
+        <ng-template #phiView>{{ hs.phi }}</ng-template>
+      </td>
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else tipoPosteView"
+               [(ngModel)]="hs.tipoPoste"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #tipoPosteView>{{ hs.tipoPoste }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else criticidadView"
+               [(ngModel)]="hs.criticidad"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #criticidadView>{{ hs.criticidad }}</ng-template>
+      </td>
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else redView"
+               [(ngModel)]="hs.red"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #redView>{{ hs.red }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else tipoRedView"
+               [(ngModel)]="hs.tipoRed"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #tipoRedView>{{ hs.tipoRed }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else alturaSoporteView"
+               [(ngModel)]="hs.alturaSoporte"
+               class="inline-edit-input"
+               type="number">
+        <ng-template #alturaSoporteView>{{ hs.alturaSoporte }}</ng-template>
+      </td>
+
+      <!-- Altura Vano -->
+      <td>
+        <input *ngIf="editingRowIndex === i; else alturaVanoView"
+               [(ngModel)]="hs.alturaVano"
+               class="inline-edit-input"
+               type="number">
+        <ng-template #alturaVanoView>{{ hs.alturaVano }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else codigoDistritoView"
+               [(ngModel)]="hs.codigoDistrito"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #codigoDistritoView>{{ hs.codigoDistrito }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else tipoViaView"
+               [(ngModel)]="hs.tipoVia"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #tipoViaView>{{ hs.tipoVia }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else nombreViaView"
+               [(ngModel)]="hs.nombreVia"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #nombreViaView>{{ hs.nombreVia }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else numeroView"
+               [(ngModel)]="hs.numero"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #numeroView>{{ hs.numero }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else manzanaView"
+               [(ngModel)]="hs.manzana"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #manzanaView>{{ hs.manzana }}</ng-template>
+      </td>
+
+      <!-- Lote -->
+      <td>
+        <input *ngIf="editingRowIndex === i; else loteView"
+               [(ngModel)]="hs.lote"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #loteView>{{ hs.lote }}</ng-template>
+      </td>
+
+      <!-- Coordenadas -->
+      <td>
+        <input *ngIf="editingRowIndex === i; else coordenadasView"
+               [(ngModel)]="hs.coordenadas"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #coordenadasView>{{ hs.coordenadas }}</ng-template>
+      </td>
+
+      <!-- Latitud S -->
+      <td>
+        <input *ngIf="editingRowIndex === i; else latitudView"
+               [(ngModel)]="hs.latitudS"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #latitudView>{{ hs.latitudS }}</ng-template>
+      </td>
+
+      <!-- Longitud W -->
+      <td>
+        <input *ngIf="editingRowIndex === i; else longitudView"
+               [(ngModel)]="hs.longitudW"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #longitudView>{{ hs.longitudW }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else urbanizacionView"
+               [(ngModel)]="hs.urbanizacion"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #urbanizacionView>{{ hs.urbanizacion }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else posteSiguienteView"
+               [(ngModel)]="hs.posteSiguiente"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #posteSiguienteView>{{ hs.posteSiguiente }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else obs1View"
+               [(ngModel)]="hs.observacion1"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #obs1View>{{ hs.observacion1 }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else obs2View"
+               [(ngModel)]="hs.observacion2"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #obs2View>{{ hs.observacion2 }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else obs3View"
+               [(ngModel)]="hs.observacion3"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #obs3View>{{ hs.observacion3 }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else condicionView"
+               [(ngModel)]="hs.condicion"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #condicionView>{{ hs.condicion }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else trabajoView"
+               [(ngModel)]="hs.trabajoARealizar"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #trabajoView>{{ hs.trabajoARealizar }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else panoramasIdView"
+               [(ngModel)]="hs.panoramasId"
+               class="inline-edit-input"
+               type="number">
+        <ng-template #panoramasIdView>{{ hs.panoramasId }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else viewCaptureView"
+               [(ngModel)]="hs.viewCapturePath"
+               class="inline-edit-input"
+               type="number">
+        <ng-template #viewCaptureView>{{ hs.viewCapturePath }}</ng-template>
+      </td>
+
+      <!-- File Path 1 -->
+      <td>
+        <input *ngIf="editingRowIndex === i; else filePath1View"
+               [(ngModel)]="hs.filePath1"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #filePath1View>{{ hs.filePath1 }}</ng-template>
+      </td>
+
+      <!-- File Path 2 -->
+      <td>
+        <input *ngIf="editingRowIndex === i; else filePath2View"
+               [(ngModel)]="hs.filePath2"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #filePath2View>{{ hs.filePath2 }}</ng-template>
+      </td>
+
+
+      <td>
+        <input *ngIf="editingRowIndex === i; else filePath3View"
+               [(ngModel)]="hs.filePath3"
+               class="inline-edit-input"
+               type="text">
+        <ng-template #filePath3View>{{ hs.filePath3 }}</ng-template>
+      </td>
+
+      <!-- Acciones -->
+      <td class="actions-cell">
+        <div *ngIf="editingRowIndex !== i; else editingActions">
+          <button class="edit-btn" (click)="startEditing(i)" title="Editar">
+           Editar
+          </button>
+
+        </div>
+
+        <ng-template #editingActions>
+          <button class="save-btn" (click)="saveChanges(i, hs)" title="Guardar">
+            Guardar
+          </button>
+          <button class="cancel-btn" (click)="cancelEditing(i)" title="Cancelar">
+            Cancelar
+          </button>
+        </ng-template>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+  <div *ngIf="!loading && !error && filteredHotspots.length === 0 && hotspots.length > 0" class="no-users">
+    <i class="fas fa-search-minus"></i>
+    <p>No se encontraron resultados que coincidan con los filtros.</p>
+  </div>
+
+  <!-- Paginación -->
+  <div *ngIf="totalPages > 1" class="pagination">
+    <button class="page-btn" [disabled]="currentPage === 1" (click)="previousPage()">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+    <button *ngFor="let page of pages"
+            class="page-btn"
+            [class.active]="page === currentPage"
+            (click)="updatePage(page)">
+      {{ page }}
+    </button>
+    <button class="page-btn" [disabled]="currentPage === totalPages" (click)="nextPage()">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+  </div>
+
+  <div *ngIf="!loading && !error && hotspots.length === 0" class="no-users">
+    <i class="fas fa-users-slash"></i>
+    <p>No hay hotspots disponibles.</p>
+  </div>
+</div>
+
+<app-modal-panel
+  *ngIf="isModalVisible"
+  (closeModal)="onCloseModal()"
+>
+</app-modal-panel>

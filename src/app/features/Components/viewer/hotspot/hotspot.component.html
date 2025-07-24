@@ -1,12 +1,10 @@
 <!-- Modal Backdrop -->
 <div *ngIf="visible" class="modal-backdrop" (click)="close()">
   <div class="modal-container" (click)="$event.stopPropagation()">
-
     <!-- Header -->
     <div class="modal-header">
       <h2 class="modal-title">
-
-        Editar Hotspot
+        Crear Hotspot
       </h2>
       <button class="close-button"
               (click)="close()"
@@ -19,44 +17,22 @@
     <!-- Content -->
     <div class="modal-content">
       <form (ngSubmit)="save()" #hotspotForm="ngForm" novalidate>
-
         <!-- Form Fields -->
-        <div class="form-group">
-          <label for="label" class="form-label required">
-
-            Etiqueta
-          </label>
-          <input
-            id="label"
-            type="text"
-            class="form-control"
-            [(ngModel)]="modalData.label"
-            name="label"
-            placeholder="Ingresa una etiqueta descriptiva"
-            required
-
-          />
-          <div *ngIf="!modalData.label?.trim() && hotspotForm.submitted" class="error-message">
-            La etiqueta es requerida
-          </div>
-        </div>
 
         <div class="form-group">
           <label for="description" class="form-label required">
-
             Descripción
           </label>
           <textarea
             id="description"
             class="form-control"
-            [(ngModel)]="modalData.description"
+            [(ngModel)]="modalData.condicion"
             name="description"
             placeholder="Describe el hotspot en detalle"
             rows="3"
             required
-            [class.error]="!modalData.description?.trim() && hotspotForm.submitted"
           ></textarea>
-          <div *ngIf="!modalData.description?.trim() && hotspotForm.submitted" class="error-message">
+          <div *ngIf="!modalData.condicion?.trim() && hotspotForm.submitted" class="error-message">
             La descripción es requerida
           </div>
         </div>
@@ -79,7 +55,6 @@
               class="file-input"
               (change)="onFileSelected($event)"
               accept="image/*"
-              #fileInput
             />
             <label for="imageInput" class="file-upload-btn">
 
@@ -97,7 +72,6 @@
             type="button"
             class="btn btn-secondary"
             (click)="close()"
-
           >
             Cancelar
           </button>
@@ -109,7 +83,6 @@
             [class.loading]="isLoading"
           >
             <span *ngIf="!isLoading" class="btn-content">
-
               Guardar
             </span>
             <span *ngIf="isLoading" class="btn-content">
@@ -118,7 +91,6 @@
             </span>
           </button>
         </div>
-
       </form>
     </div>
   </div>
@@ -132,10 +104,10 @@
   [class.error]="notification.type === 'error'"
 >
   <div class="notification-content">
-
       <i  [innerHTML]="notification.type === 'success' ? '✅' : '❌'">
     </i>
-    <span class="notification-message">{{ notification.message }}</span>
-    <button class="notification-close" (click)="hideNotification()">×</button>
+    <span class="notification-message"> {{ notification.message }} </span>
+    <button class="notification-close" (click)="hideNotification()"> × </button>
   </div>
+
 </div>

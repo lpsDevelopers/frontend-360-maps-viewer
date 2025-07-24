@@ -4,8 +4,22 @@
   display: flex;
   justify-content: space-between;
 }
+.user-actions-2 {
+  margin: 20px;
+  display: flex;
+}
 
 .action-button {
+  background: none;
+  border: none;
+  color: #a0a0a0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  border-radius: 3px;
+}
+.action-button-2 {
   background: none;
   border: none;
   color: #a0a0a0;
@@ -29,7 +43,10 @@
   content: "⬆️";
   margin-right: 5px;
 }
-
+.icon-upload-2::before {
+  content: "⬆️";
+  margin-right: 5px;
+}
 .icon-logout::before {
   content: "↪️";
   margin-right: 5px;

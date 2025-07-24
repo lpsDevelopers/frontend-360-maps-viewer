@@ -1,0 +1,117 @@
+<div class="orbit-modal">
+  <div class="header-actions">
+    <h2>Agregar Panoramas</h2>
+    <button class="close-btn" (click)="closeHideOrbitCard()">×</button>
+  </div>
+  <div class="modal-header">
+
+    <div class="upload-area">
+      <input
+        type="file"
+        accept="image/*"
+        (change)="onFilesSelected($event)"
+        id="imageInput"
+        class="file-input"
+        multiple
+      />
+      <label for="imageInput" class="upload-label">
+        <span>Seleccionar imágenes</span>
+        <small>Múltiples archivos - Máximo 10MB cada uno - JPEG, PNG</small>
+        <small>Máximo {{ maxImages }} imágenes</small>
+      </label>
+    </div>
+
+  </div>
+  <div class="album-container" *ngIf="processedImages.length > 0">
+    <div
+      *ngFor="let image of processedImages.slice(0, 20); trackBy: trackByImageId"
+      class="album-card"
+    >
+      <!-- Botón eliminar -->
+      <button (click)="onRemoveImage(image.id)" class="btn-remove">✕</button>
+
+      <!-- Vista previa pequeña -->
+      <div class="album-preview" *ngIf="image.preview">
+        <img [src]="image.preview" [alt]="image.metadata.fileName" />
+      </div>
+
+      <!-- Estado / Error -->
+      <div *ngIf="image.processingState.isProcessing" class="album-status processing">
+        Procesando...
+      </div>
+      <div *ngIf="image.processingState.hasError" class="album-status error">
+        {{ image.processingState.errorMessage }}
+      </div>
+    </div>
+  </div>
+  <div class="modal-content scroll-wrapper">
+    <div class="table-header">
+      <div class="col" *ngFor="let header of columnHeaders">
+        {{ header }}
+      </div>
+    </div>
+
+    <div class="table-row" *ngFor="let row of filters; let i = index">
+      <div class="col" *ngFor="let header of columnHeaders">
+        <input
+          class="input-field"
+          [(ngModel)]="row[header]"
+          [placeholder]="header" />
+      </div>
+      <div class="col">
+        <button class="delete-btn" (click)="removeFilter(i)">X</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button class="add-btn" (click)="addFilter()">+</button>
+    <div class="footer-actions">
+      <p class="error-message" *ngIf="showErrorMessage">{{ errorMessage }}</p>
+      <button class="apply-btn" (click)="addPanoramaInDataBase()">Registrar en la Base de Datos</button>
+    </div>
+  </div>
+
+  <div class="save-config-modal" *ngIf="showSaveConfigModal">
+    <div class="save-modal-content">
+      <div class="save-modal-header">
+        <h3>Guardar Configuración</h3>
+        <button class="close-btn" (click)="showSaveConfigModal = false">×</button>
+      </div>
+      <div class="save-modal-body">
+        <div class="form-group">
+          <label>Nombre de la configuración:</label>
+          <input type="text"
+                 [(ngModel)]="configurationName"
+                 placeholder="Ingrese un nombre"
+                 class="input-field"
+                 (keyup.enter)="saveConfiguration()">
+        </div>
+      </div>
+      <div class="save-modal-footer">
+        <button class="cancel-btn" (click)="showSaveConfigModal = false">
+          Cancelar
+        </button>
+        <button class="confirm-btn"
+                (click)="saveConfiguration()"
+                [disabled]="!configurationName.trim()">
+          Registrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="save-config-modal" *ngIf="showSuccessModal">
+  <div class="save-modal-content">
+    <div class="save-modal-header">
+      <h3>✅ Datos enviados</h3>
+      <button class="close-btn" (click)="showSuccessModal = false">×</button>
+    </div>
+    <div class="save-modal-body">
+      <p>Todos los registros han sido guardados correctamente en la base de datos.</p>
+    </div>
+    <div class="save-modal-footer">
+      <button class="confirm-btn" (click)="closeModalAndReset()">Cerrar</button>
+    </div>
+  </div>
+</div>

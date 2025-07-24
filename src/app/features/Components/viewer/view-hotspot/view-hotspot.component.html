@@ -1,0 +1,82 @@
+<!-- Contenedor con animación slideIn -->
+<div
+  class="slide-bar"
+  *ngIf="visible"
+  [@slideIn]="'in'"
+  (@slideIn.done)="!visible && closeBar()"
+>
+  <div class="bar-header">
+    <h2>Editar Hotspot</h2>
+    <button type="button" class="close-btn" (click)="closeBar()">×</button>
+  </div>
+
+  <form (ngSubmit)="saveHotspot()" #hotspotForm="ngForm">
+    <!-- Título (opcional) -->
+    <div class="form-group">
+      <label for="title">Título</label>
+      <input
+        id="title"
+        name="title"
+        type="text"
+        [(ngModel)]="modalData.title"
+        placeholder="Título del hotspot"
+      />
+    </div>
+
+    <!-- Descripción -->
+    <div class="form-group">
+      <label for="description">Descripción</label>
+      <textarea
+        id="description"
+        name="description"
+        rows="4"
+        [(ngModel)]="modalData.text"
+        placeholder="Descripción del hotspot"
+      ></textarea>
+    </div>
+
+    <!-- FilePath (nombre o ruta del archivo) -->
+    <div class="form-group">
+      <label for="filePath">Archivo asociado</label>
+      <input
+        id="filePath"
+        name="filePath"
+        type="text"
+        [(ngModel)]="modalData.filePath"
+        placeholder="Ruta o nombre del archivo"
+      />
+    </div>
+
+    <!-- Selector type_hotspot -->
+    <div class="form-group">
+      <label for="type_hotspot">Tipo de Hotspot</label>
+      <select
+        id="type_hotspot"
+        name="type_hotspot"
+        [(ngModel)]="modalData.type_hotspot">
+        <option value="hotspot">Hotspot</option>
+        <option value="equipamiento">Equipamiento</option>
+        <option value="saturado">Saturado</option>
+        <option value="inclinado">Inclinado</option>
+      </select>
+    </div>
+
+    <!-- Botones -->
+    <div class="form-actions">
+      <button
+        type="submit"
+        [disabled]="!isFormValid()"
+        class="save-btn"
+      >
+        Guardar
+      </button>
+
+    </div>
+  </form>
+  <button
+    type="button"
+    class="cancel-btn"
+    (click)="changeState()">
+    Cancelar
+  </button>
+</div>

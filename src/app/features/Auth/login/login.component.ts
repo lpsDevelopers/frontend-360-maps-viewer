@@ -99,13 +99,15 @@ export class LoginComponent implements OnInit {
   }
 
   private handleSuccessfulLogin(response: LoginResponse): void {
+    console.log('Respuesta completa del login:', response); // 👈 Este debería salir siempre
+  
     try {
       if (!response.isSucces || !response.data || typeof response.data !== 'string') {
         throw new Error('Token no válido en la respuesta');
       }
-
+  
       this.authService.login(response); // solo esto
-
+  
       this.showSuccess('Inicio de sesión exitoso');
       this.router.navigate(['/dashboard']);
     } catch (error) {
@@ -113,6 +115,8 @@ export class LoginComponent implements OnInit {
       this.showError('Error procesando la respuesta del servidor');
     }
   }
+  
+  
 
   private handleLoginError(error: any): void {
     console.error('Error en login:', error);

@@ -1,6 +1,8 @@
 import { Component, EventEmitter, Input, Output, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, Subject, map, takeUntil, catchError, of } from 'rxjs';
+import { trigger, state, style, transition, animate } from '@angular/animations';
+import * as L from 'leaflet';
 
 import { EndpointService } from '../../../../Services/endpoint/endpoint.service';
 import { AuthService } from '../../../../Services/auth/auth.service';
@@ -13,18 +15,65 @@ interface LocationsState {
   error: string | null;
 }
 
+interface CsvLocation {
+  id?: string;
+  name?: string;
+  latitud?: number;
+  longitud?: number;
+  latitude?: number;
+  longitude?: number;
+  [key: string]: any;
+}
+
 @Component({
   selector: 'app-locations',
   templateUrl: './locations.component.html',
-  styleUrls: ['./locations.component.scss']
+  styleUrls: ['./locations.component.scss'],
+  animations: [
+    trigger('slideToggle', [
+      state('in', style({height: '*'})),
+      transition(':enter', [
+        style({height: 0}),
+        animate(300, style({height: '*'}))
+      ]),
+      transition(':leave', [
+        animate(300, style({height: 0}))
+      ])
+    ]),
+    trigger('slideInOut', [
+      transition(':enter', [
+        style({
+          opacity: 0,
+          transform: 'translateY(-10px)',
+          height: 0,
+          overflow: 'hidden'
+        }),
+        animate('300ms ease-in-out', style({
+          opacity: 1,
+          transform: 'translateY(0)',
+          height: '*'
+        }))
+      ]),
+      transition(':leave', [
+        animate('200ms ease-in-out', style({
+          opacity: 0,
+          transform: 'translateY(-10px)',
+          height: 0
+        }))
+      ])
+    ])
+  ]
 })
 export class LocationsComponent implements OnInit, OnDestroy {
   @Input() isExpanded: boolean = true;
+  @Input() mapReference: L.Map | null = null; // Referencia del mapa para pasar al CSV
   @Output() toggle = new EventEmitter<void>();
   @Output() locationSelected = new EventEmitter<Location>();
+  @Output() csvDataLoaded = new EventEmitter<{location: Location, csvData: CsvLocation[]}>();
 
   selectedLocationId: number | null = null;
   isLocationClicked = false;
+
   // Reactive state management
   private readonly destroy$ = new Subject<void>();
   private readonly stateSubject = new BehaviorSubject<LocationsState>({
@@ -80,10 +129,8 @@ export class LocationsComponent implements OnInit, OnDestroy {
         }
       }
     }
-
     this.subscribeToUserChanges();
   }
-
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -92,7 +139,10 @@ export class LocationsComponent implements OnInit, OnDestroy {
 
   onLocationClick(location: Location): void {
     if (this.selectedLocationId === location.id) {
-      return; // No hacer nada si ya está seleccionado
+      // Si ya está seleccionado, colapsar
+      this.selectedLocationId = null;
+      this.setSelectedLocationId(null);
+      return;
     }
 
     this.selectedLocationId = location.id;
@@ -105,6 +155,72 @@ export class LocationsComponent implements OnInit, OnDestroy {
     }
     this.locationService.setPanoramaForLocationId(location.id);
     this.locationSelected.emit(location);
+  }
+
+  // Métodos para manejar eventos del componente CSV
+  onCsvLoaded(csvData: CsvLocation[], location: Location): void {
+    console.log(`[LocationsComponent] CSV cargado para ubicación ${location.name}:`, csvData.length, 'puntos');
+
+    // Emitir evento para notificar al componente padre
+    this.csvDataLoaded.emit({
+      location: location,
+      csvData: csvData
+    });
+
+    // Opcional: Guardar en localStorage por ubicación
+    this.saveCsvDataForLocation(location.id, csvData);
+
+    // Log para debugging
+    console.log('Datos CSV procesados:', csvData);
+  }
+
+  onCsvError(error: string, location: Location): void {
+    console.error(`[LocationsComponent] Error CSV en ubicación ${location.name}:`, error);
+
+    // Opcional: Mostrar notificación de error al usuario
+    // Puedes implementar un servicio de notificaciones aquí
+  }
+
+  // Guardar datos CSV por ubicación
+  private saveCsvDataForLocation(locationId: number, csvData: CsvLocation[]): void {
+    try {
+      const csvKey = `csv_data_location_${locationId}`;
+      localStorage.setItem(csvKey, JSON.stringify({
+        locationId: locationId,
+        data: csvData,
+        timestamp: Date.now()
+      }));
+      console.log(`[LocationsComponent] Datos CSV guardados para ubicación ${locationId}`);
+    } catch (error) {
+      console.error('Error al guardar datos CSV:', error);
+    }
+  }
+
+  // Obtener datos CSV guardados para una ubicación
+  getCsvDataForLocation(locationId: number): CsvLocation[] | null {
+    try {
+      const csvKey = `csv_data_location_${locationId}`;
+      const stored = localStorage.getItem(csvKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.data || null;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error al obtener datos CSV:', error);
+      return null;
+    }
+  }
+
+  // Limpiar datos CSV de una ubicación
+  clearCsvDataForLocation(locationId: number): void {
+    try {
+      const csvKey = `csv_data_location_${locationId}`;
+      localStorage.removeItem(csvKey);
+      console.log(`[LocationsComponent] Datos CSV eliminados para ubicación ${locationId}`);
+    } catch (error) {
+      console.error('Error al eliminar datos CSV:', error);
+    }
   }
 
   onToggleExpanded(): void {
@@ -134,7 +250,6 @@ export class LocationsComponent implements OnInit, OnDestroy {
           if (user?.companyId) {
             this.loadLocations(user.companyId);
           } else {
-
             console.warn('No hay companyId en usuario');
           }
         },
@@ -179,6 +294,7 @@ export class LocationsComponent implements OnInit, OnDestroy {
         }
       });
   }
+
   setSelectedLocationId(id: number | null): void {
     if (id === null) {
       localStorage.removeItem('selectedLocationId');
@@ -191,6 +307,7 @@ export class LocationsComponent implements OnInit, OnDestroy {
     const stored = localStorage.getItem('selectedLocationId');
     return stored ? +stored : null;
   }
+
   private updateState(partialState: Partial<LocationsState>): void {
     const currentState = this.stateSubject.value;
     const newState = { ...currentState, ...partialState };
@@ -209,5 +326,16 @@ export class LocationsComponent implements OnInit, OnDestroy {
     } catch {
       return null;
     }
+  }
+
+  // Método público para verificar si una ubicación tiene datos CSV
+  hasCSVData(locationId: number): boolean {
+    return this.getCsvDataForLocation(locationId) !== null;
+  }
+
+  // Método público para obtener el número de puntos CSV de una ubicación
+  getCsvPointsCount(locationId: number): number {
+    const csvData = this.getCsvDataForLocation(locationId);
+    return csvData ? csvData.length : 0;
   }
 }

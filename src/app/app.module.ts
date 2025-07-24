@@ -7,7 +7,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FormsModule } from "@angular/forms";
 import { LoginComponent } from "./features/Auth/login/login.component";
-import { AuthInterceptor } from "./guards/auth.interceptors";
 import { HTTP_INTERCEPTORS } from "@angular/common/http";
 import { MainPageComponent } from './features/Pages/main-page/main-page.component';
 import { MapComponent } from './features/Components/map/map.component';
@@ -29,6 +28,31 @@ import { LoaderCubeComponent } from "./features/Components/loader-cube/loader-cu
 import { HotspotComponent } from "./features/Components/viewer/hotspot/hotspot.component";
 import { HotspotTooltipComponent } from "./features/Components/viewer/hotspot-tooltip/hotspot-tooltip.component";
 import { OpenHotspotComponent } from './features/Components/viewer/open-hotspot/open-hotspot.component';
+import { BarComponent } from './features-admin/Component-utils/bar/bar.component';
+import { AdminDashboardComponent } from './features-admin/Components/admin-dashboard/admin-dashboard.component';
+import { AllHotspotsComponent } from './features-admin/Components/all-hotspots/all-hotspots.component';
+import { AllUsersComponent } from './features-admin/Components/all-users/all-users.component';
+import { AdminLayoutComponent } from './features-admin/Layout/admin-layout/admin-layout.component';
+import {AdminLoginComponent} from "./features-admin/Auth/admin-login/admin-login.component";
+import {AuthInterceptor} from "./global-guards/guards/auth.interceptor";
+import {AllCompaniesComponent} from "./features-admin/Components/all-companies/all-companies.component";
+import {AllPanoramasComponent} from "./features-admin/Components/all-panoramas/all-panoramas.component";
+import {AllLocationsComponent} from "./features-admin/Components/all-locations/all-locations.component";
+import { AllCompanyBucketsComponent } from "./features-admin/Components/all-company-buckets/all-company-buckets.component";
+import {AdminLocationsComponent} from "./features-admin/Pages/admin-locations/admin-locations.component";
+import {AdminCompaniesComponent} from "./features-admin/Pages/admin-companies/admin-companies.component";
+import { AdminCompanyBucketsComponent } from "./features-admin/Pages/admin-company-buckets/admin-company-buckets.component";
+import {AdminHotspotsComponent} from "./features-admin/Pages/admin-hotspots/admin-hotspots.component";
+import {AdminPanoramasComponent} from "./features-admin/Pages/admin-panoramas/admin-panoramas.component";
+import {AdminUsersComponent} from "./features-admin/Pages/admin-users/admin-users.component";
+import {ModalPanelComponent} from "./features-admin/Component-utils/modal-panel/modal-panel.component";
+import {ModalPanel2Component} from "./features-admin/Component-utils/modal-panel-2/modal-panel-2.component";
+import {ImageUploaderComponent} from "./features-admin/Component-utils/image-uploader/image-uploader.component";
+import {AdminUploaderComponent} from "./features-admin/Pages/admin-uploader/admin-uploader.component";
+import {ModalPanel3Component} from "./features-admin/Component-utils/modal-panel-3/modal-panel-3.component";
+import { CsvLocationsComponent } from './features/Components/csv-locations/csv-locations.component';
+
+
 
 @NgModule({
   declarations: [
@@ -52,7 +76,30 @@ import { OpenHotspotComponent } from './features/Components/viewer/open-hotspot/
     LoaderCubeComponent,
     HotspotComponent,
     HotspotTooltipComponent,
-    OpenHotspotComponent
+    OpenHotspotComponent,
+    AdminLoginComponent,
+    BarComponent,
+    AdminDashboardComponent,
+    AllHotspotsComponent,
+    AllUsersComponent,
+    AdminLayoutComponent,
+    AllCompaniesComponent,
+    AllPanoramasComponent,
+    AllLocationsComponent,
+    AllCompanyBucketsComponent,
+    LocationsComponent,
+    AdminLocationsComponent,
+    AdminCompaniesComponent,
+    AdminCompanyBucketsComponent,
+    AdminHotspotsComponent,
+    AdminPanoramasComponent,
+    AdminUsersComponent,
+    ModalPanelComponent,
+    ModalPanel2Component,
+    ImageUploaderComponent,
+    AdminUploaderComponent,
+    ModalPanel3Component,
+    CsvLocationsComponent
   ],
   imports: [
     BrowserModule,
@@ -67,7 +114,7 @@ import { OpenHotspotComponent } from './features/Components/viewer/open-hotspot/
   providers: [
     {
       provide: HTTP_INTERCEPTORS,
-      useClass: AuthInterceptor,
+      useClass:AuthInterceptor,
       multi: true
     }
   ],

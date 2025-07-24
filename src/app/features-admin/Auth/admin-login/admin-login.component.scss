@@ -1,0 +1,227 @@
+.login-container {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  min-height: 100vh;
+  background-image: url('/assets/images/fondo-login.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background: #29231059;
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 450px;
+  margin: auto;
+  padding: 2.5rem;
+  background-color: rgb(19, 19, 19);
+  backdrop-filter: blur(70px);
+  border-radius: 16px;
+  border: 1px solid rgb(49, 47, 19);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+
+  h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    color: rgba(119, 119, 119, 0.8);
+    font-size: 0.9rem;
+  }
+}
+
+.form-group {
+  position: relative;
+  margin-bottom: 1.5rem;
+
+  label {
+    display: block;
+    font-size: 1rem;
+    color: #b4b4b4;
+    margin-bottom: 0.8rem;
+    opacity: 0.9;
+  }
+
+  .input-wrapper {
+    position: relative;
+
+    i {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    input {
+      width: 90%;
+      padding: 16px 20px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: white;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      caret-color: white;
+
+      &:-webkit-autofill,
+      &:-webkit-autofill:hover,
+      &:-webkit-autofill:focus,
+      &:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px rgba(0, 0, 0, 0.3) inset !important;
+        -webkit-text-fill-color: white !important;
+        transition: background-color 5000s ease-in-out 0s;
+      }
+
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      &:focus {
+        border-color: #2b2b2b;
+        box-shadow: 0 0 0 2px rgba(29, 29, 29, 0.2);
+        outline: none;
+        background: rgba(0, 0, 0, 0.3);
+      }
+
+      &.invalid {
+        border-color: #ff4444;
+        background: rgba(255, 68, 68, 0.05);
+      }
+    }
+  }
+
+  .validation-error {
+    color: #ff4444;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+}
+
+.message-box {
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &.error {
+    background: rgba(255, 68, 68, 0.1);
+    border: 1px solid rgba(255, 68, 68, 0.2);
+    color: #ff4444;
+  }
+
+  &.success {
+    background: rgba(0, 200, 83, 0.1);
+    border: 1px solid rgba(0, 200, 83, 0.2);
+    color: #00c853;
+  }
+}
+
+.login-button {
+  position: relative;
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(to right, rgba(56, 56, 56, 0.342), rgba(34, 34, 34, 0));
+  color: white;
+  border: 1px solid rgba(54, 54, 54, 0.651);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 1.5rem;
+
+  &:hover {
+    background: linear-gradient(to left, rgba(41, 42, 43, 0.726), rgba(0, 13, 19, 0));
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: spin 1s linear infinite;
+}
+
+.forgot-password {
+  text-align: right;
+  margin-top: 0.5rem;
+
+  a {
+    color: #00b7ff;
+    text-decoration: none;
+    font-size: 0.9rem;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+  p {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 1rem;
+
+    a {
+      color: #00b7ff;
+      text-decoration: none;
+    }
+  }
+
+  .admin-link {
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    font-size: 0.8rem;
+
+    &:hover {
+      color: white;
+    }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .login-card {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+}

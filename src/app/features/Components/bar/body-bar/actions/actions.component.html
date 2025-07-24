@@ -1,5 +1,11 @@
+<div class="user-actions-2">
+<button class="action-button-2" (click)="onUpload()">
+  <span *ngIf="isExpanded" class="icon-upload-2"></span>
+  <span *ngIf="isExpanded">Importar csv</span>
+</button>
+</div>
 <div class="user-actions">
-  <button class="action-button" (click)="onUpload()">
+  <button  (click)="onUpload()" class="action-button" >
     <span *ngIf="isExpanded" class="icon-upload"></span>
     <span *ngIf="isExpanded">Upload</span>
   </button>

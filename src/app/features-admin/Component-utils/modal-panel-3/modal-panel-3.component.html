@@ -1,0 +1,72 @@
+<div class="orbit-modal">
+  <div class="header-actions">
+    <h2 >Agregar Location</h2>
+
+    <button class="close-btn" (click)="closeHideOrbitCard()">×</button>
+  </div>
+
+
+  <div class="modal-content scroll-wrapper">
+    <div class="table-header">
+      <div class="col" *ngFor="let header of columnHeaders">
+        {{ header }}
+      </div>
+      <div >
+
+      </div>
+    </div>
+
+    <div class="table-row" *ngFor="let row of filters; let i = index">
+      <div class="col" *ngFor="let header of columnHeaders">
+        <input
+          class="input-field"
+          [(ngModel)]="row[header]"
+          [placeholder]="header" />
+      </div>
+      <div class="col">
+        <button class="delete-btn" (click)="removeFilter(i)">X</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button class="add-btn" (click)="addFilter()">+</button>
+    <div class="footer-actions">
+      <p class="error-message" *ngIf="showErrorMessage">{{ errorMessage }}</p>
+      <button class="apply-btn" (click)="addLocationInDataBase() ">Registrar en la Base de Datos</button>
+    </div>
+  </div>
+
+  <div class="save-config-modal" *ngIf="showSaveConfigModal">
+    <div class="save-modal-content">
+      <div class="save-modal-header">
+        <h3>Guardar Configuración</h3>
+        <button class="close-btn" (click)="showSaveConfigModal = false">×</button>
+      </div>
+      <div class="save-modal-body">
+        <div class="form-group">
+          <label>Nombre de la configuración:</label>
+          <input type="text"
+                 [(ngModel)]="configurationName"
+                 placeholder="Ingrese un nombre"
+                 class="input-field"
+                 (keyup.enter)="saveConfiguration()">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="save-config-modal" *ngIf="showSuccessModal">
+  <div class="save-modal-content">
+    <div class="save-modal-header">
+      <h3>✅ Datos enviados</h3>
+      <button class="close-btn" (click)="showSuccessModal = false">×</button>
+    </div>
+    <div class="save-modal-body">
+      <p>Todos los registros han sido guardados correctamente en la base de datos.</p>
+    </div>
+    <div class="save-modal-footer">
+      <button class="confirm-btn" (click)="closeModalAndReset()">Cerrar</button>
+    </div>
+  </div>
+</div>

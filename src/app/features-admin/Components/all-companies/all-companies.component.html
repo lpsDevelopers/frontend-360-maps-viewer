@@ -1,0 +1,73 @@
+<div class="list-container">
+  <div *ngIf="loading" class="loading-spinner"><div class="spinner"></div></div>
+
+  <div *ngIf="error" class="error-message">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ error }}
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-section">
+    <input
+      type="text"
+      [(ngModel)]="filters.id"
+      (input)="applyFilters()"
+      placeholder="Buscar ID"
+    />
+    <input
+      type="text"
+      [(ngModel)]="filters.name"
+      (input)="applyFilters()"
+      placeholder="Buscar título"
+    />
+  </div>
+  <div class="export-buttons">
+    <button class="export-btn" (click)="exportToExcel()">
+      <i class="fas fa-file-excel"></i>
+      Excel
+    </button>
+    <button class="export-btn" (click)="exportToCSV()">
+      <i class="fas fa-file-csv"></i>
+      CSV
+    </button>
+  </div>
+  <!-- Tabla -->
+  <table *ngIf="!loading && !error && filteredCompanies.length > 0" class="factor-table">
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let hs of filteredCompanies">
+      <td>{{ hs.id }}</td>
+      <td>{{ hs.name }}</td>
+    </tr>
+    </tbody>
+  </table>
+  <div *ngIf="!loading && !error && filteredCompanies.length === 0 && companies.length > 0" class="no-users">
+    <i class="fas fa-search-minus"></i>
+    <p>No se encontraron resultados que coincidan con los filtros.</p>
+  </div>
+  <!-- Paginación -->
+  <div *ngIf="totalPages > 1" class="pagination">
+    <button class="page-btn" [disabled]="currentPage === 1" (click)="previousPage()">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+    <button *ngFor="let page of pages"
+            class="page-btn"
+            [class.active]="page === currentPage"
+            (click)="updatePage(page)">
+      {{ page }}
+    </button>
+    <button class="page-btn" [disabled]="currentPage === totalPages" (click)="nextPage()">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+  </div>
+
+  <div *ngIf="!loading && !error && companies.length === 0" class="no-users">
+    <i class="fas fa-users-slash"></i>
+    <p>No hay hotspots disponibles.</p>
+  </div>
+</div>

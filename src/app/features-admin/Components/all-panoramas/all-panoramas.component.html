@@ -1,0 +1,94 @@
+<div class="list-container">
+  <!-- Loading spinner -->
+  <div *ngIf="loading" class="loading-spinner">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Error message -->
+  <div *ngIf="error" class="error-message">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ error }}
+  </div>
+
+
+  <!-- Filtros -->
+  <div class="filters-section">
+    <div class="left-actions">
+      <button
+        (click)="onOpenModal()"
+        class="brand-text-2">
+        Agregar Registros
+      </button>
+      <button
+        (click)="onUploaderImage()"
+        class="brand-text-3">
+        Generar URL
+      </button>
+    </div>
+
+    <div class="right-filters">
+      <input type="text" [(ngModel)]="filters.filename" (input)="applyFilters()" placeholder="Buscar archivo" />
+      <input type="text" [(ngModel)]="filters.address" (input)="applyFilters()" placeholder="Buscar dirección" />
+      <input type="text" [(ngModel)]="filters.latlng" (input)="applyFilters()" placeholder="Buscar lat/lng" />
+      <input type="text" [(ngModel)]="filters.viewerUrl" (input)="applyFilters()" placeholder="Buscar URL visor" />
+    </div>
+  </div>
+
+
+  <!-- Tabla -->
+  <table *ngIf="!loading && !error && filteredPanoramas.length > 0" class="factor-table">
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Archivo</th>
+      <th>Dirección</th>
+      <th>Lat / Lng</th>
+      <th>URL Visor</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let panorama of filteredPanoramas">
+      <td>{{ panorama.id }}</td>
+      <td>{{ panorama.filename }}</td>
+      <td>{{ panorama.address }}</td>
+      <td>{{ panorama.latitude }}, {{ panorama.longitude }}</td>
+      <td>
+        <a [href]="panorama.viewerUrl" target="_blank">Ver</a>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+  <div *ngIf="!loading && !error && filteredPanoramas.length === 0 && panoramas.length > 0" class="no-users">
+    <i class="fas fa-search-minus"></i>
+    <p>No se encontraron resultados que coincidan con los filtros.</p>
+  </div>
+  <!-- Paginación -->
+  <div *ngIf="totalPages > 1" class="pagination">
+    <button class="page-btn" [disabled]="currentPage === 1" (click)="previousPage()">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+    <button
+      *ngFor="let page of pages"
+      class="page-btn"
+      [class.active]="page === currentPage"
+      (click)="updatePage(page)">
+      {{ page }}
+    </button>
+    <button class="page-btn" [disabled]="currentPage === totalPages" (click)="nextPage()">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+  </div>
+
+  <!-- Sin resultados -->
+  <div *ngIf="!loading && !error && panoramas.length === 0" class="no-users">
+    <i class="fas fa-users-slash"></i>
+    <p>No hay panoramas disponibles.</p>
+  </div>
+</div>
+
+<app-modal-panel-2
+  *ngIf="isModalVisible"
+  (closeModal)="onCloseModal()"
+>
+
+</app-modal-panel-2>

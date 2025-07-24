@@ -1,0 +1,59 @@
+<div [class]="getSidebarClasses()">
+  <nav class="sidebar-nav">
+    <!-- Logo/Brand Section -->
+    <div class="sidebar-header">
+      <div class="brand-logo">
+        <i class="fas fa-shield-alt"></i>
+        <span class="brand-text">Admin Panel</span>
+      </div>
+
+
+
+      <button class="collapse-btn" (click)="toggleSidebar()">
+        <i class="fas fa-chevron-left" [class.rotated]="isCollapsed"></i>
+      </button>
+    </div>
+    <div class="sidebar-header">
+
+
+
+    </div>
+    <!-- Navigation Items -->
+    <div class="nav-section">
+      <h3 class="section-title">Navegación</h3>
+      <ng-container *ngFor="let item of menuItems">
+        <a *ngIf="hasPermission(item.permission)"
+           [routerLink]="item.path"
+           class="nav-item"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{exact: true}"
+           (click)="onNavigate()">
+          <div class="nav-icon">
+            <i [class]="item.icon"></i>
+          </div>
+          <span class="nav-label">{{item.label}}</span>
+          <div class="nav-indicator"></div>
+        </a>
+      </ng-container>
+    </div>
+
+    <!-- User Section -->
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="user-details">
+          <span class="user-name">Administrador</span>
+          <span class="user-role">Admin</span>
+        </div>
+      </div>
+      <button class="logout-btn" (click)="logout()">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Cerrar Sesión</span>
+      </button>
+    </div>
+  </nav>
+</div>
+
+

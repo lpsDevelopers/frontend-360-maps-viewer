@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Subject, BehaviorSubject, Observable } from 'rxjs';
-import { ModalData } from '../modal/modal.service';
+import {Hotspot} from "../../../Model/types";
 
 @Injectable({
   providedIn: 'root'
 })
 export class OpenHotspotService {
   // Subject for opening modal with data
-  private openBarHotspot = new Subject<ModalData>();
+  private openBarHotspot = new Subject<Hotspot>();
   openModal$ = this.openBarHotspot.asObservable();
 
   // Subject for closing modal
@@ -19,7 +19,7 @@ export class OpenHotspotService {
   isModalOpen$ = this.isModalOpenSubject.asObservable();
 
   // BehaviorSubject to store current modal data
-  private currentModalDataSubject = new BehaviorSubject<ModalData | null>(null);
+  private currentModalDataSubject = new BehaviorSubject<Hotspot | null>(null);
   currentModalData$ = this.currentModalDataSubject.asObservable();
 
   constructor() { }
@@ -29,7 +29,7 @@ export class OpenHotspotService {
    * @param data - The modal data to display
    * @returns boolean indicating success
    */
-  openBar(data: ModalData): boolean {
+  openBar(data: Hotspot): boolean {
     try {
       this.openBarHotspot.next(data);
       this.currentModalDataSubject.next(data);
@@ -71,7 +71,7 @@ export class OpenHotspotService {
    * Gets the current modal data
    * @returns current modal data or null
    */
-  get currentModalData(): ModalData | null {
+  get currentModalData(): Hotspot | null {
     return this.currentModalDataSubject.value;
   }
 
@@ -80,7 +80,7 @@ export class OpenHotspotService {
    * @param data - Optional data to open with, if toggling to open
    * @returns boolean indicating the new state (true = open, false = closed)
    */
-  toggleModal(data?: ModalData): boolean {
+  toggleModal(data?: Hotspot): boolean {
     if (this.isModalOpen) {
       this.closeBar();
       return false;
@@ -100,7 +100,7 @@ export class OpenHotspotService {
    * @param data - New data to display
    * @returns boolean indicating success
    */
-  updateModalData(data: ModalData): boolean {
+  updateModalData(data: Hotspot): boolean {
     if (!this.isModalOpen) {
       console.warn('OpenHotspotService → Cannot update data when modal is closed');
       return false;

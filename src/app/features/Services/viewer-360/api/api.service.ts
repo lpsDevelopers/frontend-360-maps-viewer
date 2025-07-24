@@ -1,19 +1,178 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import {HttpClient, HttpErrorResponse, HttpHeaders} from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError, forkJoin } from 'rxjs';
 import { catchError, timeout, tap, switchMap } from 'rxjs/operators';
 import {ApiResponse, Hotspot, Panorama} from "../../../Model/types";
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
-  private readonly apiUrl = 'https://localhost:44331/api';
+  private readonly apiUrl = 'https://ec2-52-47-50-36.eu-west-3.compute.amazonaws.com/api';
   private readonly timeoutDuration = 15000;
   constructor(private http: HttpClient) {}
 
   selectedImageUrl: string | ArrayBuffer | null = null;
   selectedImageName: string | null = null;
+
+  getPosteById(id: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/Postes/${id}`).pipe(
+      timeout(this.timeoutDuration),
+      catchError(this.handleError)
+    );
+  }
+
+  updatePoste(id: number, posteData: any): Observable<any> {
+    const url = `${this.apiUrl}/postes/${id}`;
+
+    return this.http.put<any>(url, posteData).pipe(
+      timeout(this.timeoutDuration),
+      catchError(this.handleError)
+    );
+  }
+  deletePoste(id: number): Observable<any> {
+    const url = `${this.apiUrl}/postes/${id}`;
+
+    return this.http.delete<any>(url).pipe(
+      timeout(this.timeoutDuration),
+      catchError(this.handleError)
+    );
+  }
+
+  getAllHotspots():Observable<Hotspot> {
+    return this.http.get<Hotspot>(this.apiUrl).pipe(
+      tap(hotspots => {
+        console.log( 'Todos los hotspots:', hotspots);
+      })
+    );
+  }
+  uploadHotspotWithImages(formData: FormData): Observable<any> {
+    return this.http.post(`${this.apiUrl}/Files/upload`, formData);
+  }
+  postFileUpload(file: any) :Observable<any> {
+    console.log('[ApiService] Enviando archivo:', file);
+    return this.http.post(`${this.apiUrl}/file/upload`, file)
+      .pipe(
+      tap(response => {
+        console.log('[ApiService] Hotspot guardado con éxito:', response);
+      }),
+      catchError(error => {
+        console.error('[ApiService] Error al guardar hotspot:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+  uploadFile(formData: FormData) {
+    return this.http.post('https://ec2-52-47-50-36.eu-west-3.compute.amazonaws.com/api/Files/upload', formData, {
+      responseType: 'text'  // Porque tu curl acepta 'text/plain'
+    });
+  }
+
+  postPoste(posteData: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/Postes`, posteData)
+      .pipe(
+      tap(response => {
+        console.log('[ApiService] Hotspot guardado con éxito:', response);
+      }),
+      catchError(error => {
+        console.error('[ApiService] Error al guardar hotspot:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  postPanorama(panoramaData: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/Panoramas`, panoramaData)
+      .pipe(
+        tap(response => {
+          console.log('[ApiService] Hotspot guardado con éxito:', response);
+        }),
+        catchError(error => {
+          console.error('[ApiService] Error al guardar hotspot:', error);
+          return throwError(() => error);
+        })
+      );
+  }
+
+  postHotspot(hotspot: Hotspot): Observable<any> {
+    console.log('[ApiService] Enviando hotspot:', hotspot);
+    return this.http.post(`${this.apiUrl}/Postes`, hotspot).pipe(
+      tap(response => {
+        console.log('[ApiService] Hotspot guardado con éxito:', response);
+      }),
+      catchError(error => {
+        console.error('[ApiService] Error al guardar hotspot:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  updatePanoramaHasHotspot(panoramaData: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/Panoramas/Edit`, panoramaData)
+      .pipe(
+        tap(response => {
+          console.log('[AdminEndpointService] Panorama guardado con éxito:', response);
+        }),
+        catchError(error => {
+          console.error('[AdminEndpointService] Error al guardar panorama:', error);
+          return throwError(() => error);
+        })
+      );
+  }
+
+  updatePanoramaHasHotspot2(panoramaId: number, HasHotspot: number): Observable<any> {
+    const body = {
+      panoramaId,
+      HasHotspot
+    };
+
+    return this.http.put<any>(`${this.apiUrl}/Panoramas/Edit`, body).pipe(
+      tap(response => {
+        console.log(`Panorama ${panoramaId} actualizado correctamente con HasHotspot = ${HasHotspot}`);
+        console.log('Respuesta del backend:', response);
+      })
+    );
+  }
+  getPanoramaHasHotspots(): Observable<any>{
+    return this.http.get<any>(`${this.apiUrl}/Panoramas/has-hotspots`).pipe(
+      tap( panoramas => {
+        console.log( 'Todos los panoramas de activos:', panoramas);
+      })
+    );
+  }
+
+  getColorByHotspot(panoramaId: number): Observable<string | null> {
+    return this.http
+      .get<{ isSucces: boolean; data: Hotspot[] }>(`${this.apiUrl}/hotspots/panoramaId/${panoramaId}`)
+      .pipe(
+        map(res => {
+          console.log('[ApiService] Respuesta recibida:', res);
+          // Tomamos el primer hotspot, si existe, y devolvemos su propiedad "type"
+          const firstHotspot = res.data[0];
+          return firstHotspot ? firstHotspot.tipoPoste : null;
+        })
+      );
+  }
+
+  getPostesByPanorama(panoramaId: number): Observable<Hotspot[]> {
+    return this.http
+      .get<{ isSucces: boolean; data: Hotspot[] }>(`${this.apiUrl}/postes/panoramaId/${panoramaId}`)
+      .pipe(
+        map(res => {
+          console.log('[ApiService] Respuesta recibida:', res);
+          return res.data || [];
+        })
+      );
+  }
+
+  uploadFiles(files: FormData): Observable<any> {
+    return this.http.post(`${this.apiUrl}/upload`, files);
+  }
+
+  postHotspotWithFiles(formData: FormData): Observable<any> {
+    return this.http.post(`${this.apiUrl}/hotspots/with-files`, formData);
+  }
 
   getPanoramaById(id: number): Observable<ApiResponse<Panorama>> {
     return this.http.get<ApiResponse<Panorama[]>>(`${this.apiUrl}/panoramas`).pipe(
@@ -36,9 +195,6 @@ export class ApiService {
     );
   }
 
-  getHotspots(): Observable<Hotspot[]> {
-    return this.http.get<Hotspot[]>('assets/data/hotspots.json');
-  }
 
   getPanoramaByLocationId(LocationId: number): Observable<ApiResponse<Panorama>> {
     return this.http.get<ApiResponse<Panorama[]>>(`${this.apiUrl}/panoramas`).pipe(

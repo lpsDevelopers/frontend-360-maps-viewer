@@ -1,0 +1,79 @@
+<div class="list-container">
+  <!-- Loading spinner -->
+  <div *ngIf="loading" class="loading-spinner">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Error message -->
+  <div *ngIf="error" class="error-message">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ error }}
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-section">
+
+    <input
+      type="text"
+      [(ngModel)]="filters.email"
+      (input)="applyFilters()"
+      placeholder="Buscar email"
+    />
+
+  </div>
+
+
+  <!-- Tabla -->
+  <table *ngIf="!loading && !error && filteredUsers.length > 0" class="factor-table">
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Email</th>
+      <th>Estado</th>
+      <th>Verificación Email</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let user of filteredUsers">
+      <td>{{ user.id }}</td>
+      <td>{{ user.email }}</td>
+      <td>{{ user.stateList }}</td>
+      <td>
+        <span *ngIf="user.emailVerified; else notVerified" class="verified">Verificado</span>
+        <ng-template #notVerified>
+          <span class="not-verified">No Verificado</span>
+        </ng-template>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+  <div *ngIf="!loading && !error && filteredUsers.length === 0 && users.length > 0" class="no-users">
+    <i class="fas fa-search-minus"></i>
+    <p>No se encontraron resultados que coincidan con los filtros.</p>
+  </div>
+  <!-- Paginación -->
+  <div *ngIf="totalPages > 1" class="pagination">
+    <button class="page-btn" [disabled]="currentPage === 1" (click)="previousPage()">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+
+    <button
+      *ngFor="let page of pages"
+      class="page-btn"
+      [class.active]="page === currentPage"
+      (click)="updatePage(page)"
+    >
+      {{ page }}
+    </button>
+
+    <button class="page-btn" [disabled]="currentPage === totalPages" (click)="nextPage()">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+  </div>
+
+  <!-- No users -->
+  <div *ngIf="!loading && !error && users.length === 0" class="no-users">
+    <i class="fas fa-users-slash"></i>
+    <p>No hay usuarios disponibles.</p>
+  </div>
+</div>

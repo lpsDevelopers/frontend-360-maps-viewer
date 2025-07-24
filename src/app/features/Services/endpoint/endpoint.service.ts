@@ -9,13 +9,14 @@ import {LoginResponse, ApiResponse, Location, Panorama, User} from '../../Model/
 })
 export class EndpointService {
 
-  private readonly apiUrl = 'https://localhost:44331/api';
+  private readonly apiUrl = 'https://ec2-52-47-50-36.eu-west-3.compute.amazonaws.com/api';
   private readonly timeoutDuration = 15000;
 
   // Caché para panoramas por locationId
   private panoramasCache = new Map<string, ApiResponse<Panorama[]>>();
 
   constructor(private http: HttpClient) { }
+
 
   login(email: string, password: string): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/User/Login`, { email, password })
@@ -71,6 +72,22 @@ export class EndpointService {
         timeout(this.timeoutDuration),
         catchError(this.handleError)
       )
+  }
+
+  loginAdmin(email: string, password: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/Admin/LoginAdmin`, { email, password })
+      .pipe(
+        timeout(this.timeoutDuration),
+        catchError(this.handleError)
+      );
+  }
+
+  loginUser(email: string, password: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/User/LoginUser`, { email, password })
+      .pipe(
+        timeout(this.timeoutDuration),
+        catchError(this.handleError)
+      );
   }
 
   preloadAllPanoramas(): Observable<ApiResponse<Panorama>[]> {

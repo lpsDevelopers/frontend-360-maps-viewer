@@ -1,95 +1,427 @@
-<!-- open-hotspot.component.html -->
-<div class="hotspot-bar"
-     *ngIf="visible"
-     [@slideIn]
-     (click)="$event.stopPropagation()">
-
-  <!-- Header -->
-  <div class="header">
-    <h2 class="title">{{ modalData.label || 'Información del Hotspot' }}</h2>
-    <button class="close-button"
-            (click)="closeBar()"
-            aria-label="Cerrar panel"
-            title="Cerrar">
-      ×
+<!-- Contenedor con animación slideIn -->
+<script src="../../../../app.module.ts"></script>
+<div
+  class="slide-bar"
+  *ngIf="visible"
+  [@slideIn]="'in'"
+  (@slideIn.done)="!visible && closeBar()"
+>
+  <div class="bar-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+        </svg>
+      </div>
+      <h2>Editar Poste</h2>
+    </div>
+    <button type="button" class="close-btn" (click)="closeBar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
     </button>
   </div>
 
-  <!-- Content -->
-  <div class="content">
-    <!-- Basic Information -->
-    <section class="info-section">
-      <h3>Información General</h3>
-      <div class="info-item" *ngIf="modalData.description">
-        <span class="label">Descripción:</span>
-        <span class="value">{{ modalData.description }}</span>
-      </div>
-      <div class="info-item" *ngIf="modalData.equipment_location">
-        <span class="label">Ubicación del Equipo:</span>
-        <span class="value">{{ modalData.equipment_location }}</span>
-      </div>
-      <div class="info-item" *ngIf="modalData.identifier">
-        <span class="label">Identificador:</span>
-        <span class="value">{{ modalData.identifier }}</span>
-      </div>
-      <div class="info-item" *ngIf="modalData.project">
-        <span class="label">Proyecto:</span>
-        <span class="value">{{ modalData.project }}</span>
-      </div>
-    </section>
+  <form (ngSubmit)="saveHotspot()" #hotspotForm="ngForm" class="modern-form">
 
-    <!-- Address Information -->
-    <section class="info-section">
-      <h3>Dirección</h3>
-      <div class="info-item">
-        <span class="label">Dirección Completa:</span>
-        <span class="value">{{ getFullAddress() }}</span>
-      </div>
-      <div class="info-item" *ngIf="modalData.postal_code">
-        <span class="label">Código Postal:</span>
-        <span class="value">{{ modalData.postal_code }}</span>
-      </div>
-    </section>
+    <!-- Información Principal -->
+    <div class="form-section">
+      <h3 class="section-title">
+        <span class="section-icon">📍</span>
+        Información Principal
+      </h3>
 
-    <!-- Coordinates -->
-    <section class="info-section">
-      <h3>Coordenadas</h3>
-      <div class="coordinates-grid">
-        <div class="info-item">
-          <span class="label">Latitud:</span>
-          <span class="value">{{ formatCoordinate(modalData.latitude) }}</span>
-        </div>
-        <div class="info-item">
-          <span class="label">Longitud:</span>
-          <span class="value">{{ formatCoordinate(modalData.longitude) }}</span>
+      <!-- Codigo Poste Antiguo -->
+      <div class="form-group">
+        <label for="codigoPosteAntiguo">Código Poste Antiguo</label>
+        <div class="input-wrapper">
+          <input
+            id="codigoPosteAntiguo"
+            name="codigoPosteAntiguo"
+            type="text"
+            [(ngModel)]="modalData.codigoPosteAntiguo"
+            placeholder="Ingresa el código del poste antiguo"
+            required
+          />
+          <span class="input-border"></span>
         </div>
       </div>
-    </section>
 
-    <!-- Additional Information -->
-    <section class="info-section" *ngIf="modalData.registration_date || modalData.additional_notes">
-      <h3>Información Adicional</h3>
-      <div class="info-item" *ngIf="modalData.registration_date">
-        <span class="label">Fecha de Registro:</span>
-        <span class="value">{{ formatDate(modalData.registration_date) }}</span>
+      <!-- Tipo Poste -->
+      <div class="form-group">
+        <label for="tipoPoste">Tipo de Poste</label>
+        <div class="select-wrapper">
+          <select
+            id="tipoPoste"
+            name="tipoPoste"
+            [(ngModel)]="modalData.tipoPoste"
+            required
+          >
+            <option value="">Seleccionar tipo</option>
+            <option value="Tipo1">Tipo 1</option>
+            <option value="Tipo2">Tipo 2</option>
+            <option value="Tipo3">Tipo 3</option>
+          </select>
+          <span class="select-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6,9 12,15 18,9"></polyline>
+            </svg>
+          </span>
+        </div>
       </div>
-      <div class="info-item" *ngIf="modalData.additional_notes">
-        <span class="label">Notas:</span>
-        <span class="value notes">{{ modalData.additional_notes }}</span>
-      </div>
-    </section>
 
-    <!-- Actions -->
-    <section class="actions-section">
-      <button class="action-btn primary" (click)="closeBar()">
-        Cerrar
+      <!-- Nombre Vía -->
+      <div class="form-group">
+        <label for="nombreVia">Nombre de la Vía</label>
+        <div class="input-wrapper">
+          <input
+            id="nombreVia"
+            name="nombreVia"
+            type="text"
+            [(ngModel)]="modalData.nombreVia"
+            placeholder="Ingresa el nombre de la vía"
+          />
+          <span class="input-border"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detalles del Trabajo -->
+    <div class="form-section">
+      <h3 class="section-title">
+        <span class="section-icon">🔧</span>
+        Detalles del Trabajo
+      </h3>
+
+      <!-- Trabajo a Realizar -->
+      <div class="form-group">
+        <label for="trabajoARealizar">Trabajo a Realizar</label>
+        <div class="textarea-wrapper">
+          <textarea
+            id="trabajoARealizar"
+            name="trabajoARealizar"
+            rows="3"
+            [(ngModel)]="modalData.trabajoARealizar"
+            placeholder="Describe detalladamente el trabajo a realizar..."
+          ></textarea>
+          <span class="textarea-border"></span>
+        </div>
+      </div>
+
+      <!-- Observación 1 -->
+      <div class="form-group">
+        <label for="observacion1">Observaciones</label>
+        <div class="textarea-wrapper">
+          <textarea
+            id="observacion1"
+            name="observacion1"
+            rows="3"
+            [(ngModel)]="modalData.observacion1"
+            placeholder="Agrega observaciones adicionales..."
+          ></textarea>
+          <span class="textarea-border"></span>
+        </div>
+      </div>
+
+      <!-- Condición -->
+      <div class="form-group">
+        <label for="condicion">Estado de Condición</label>
+        <div class="radio-group">
+          <div class="radio-option">
+            <input
+              type="radio"
+              id="condicionActivo"
+              name="condicion"
+              value="Activo"
+              [(ngModel)]="modalData.condicion"
+            />
+            <label for="condicionActivo" class="radio-label">
+              <span class="radio-indicator"></span>
+              <span class="radio-text">Activo</span>
+            </label>
+          </div>
+          <div class="radio-option">
+            <input
+              type="radio"
+              id="condicionInactivo"
+              name="condicion"
+              value="Inactivo"
+              [(ngModel)]="modalData.condicion"
+            />
+            <label for="condicionInactivo" class="radio-label">
+              <span class="radio-indicator"></span>
+              <span class="radio-text">Inactivo</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección de Archivos -->
+    <div class="form-section file-section">
+      <h3 class="section-title">
+        <span class="section-icon">📁</span>
+        Gestión de Archivos
+      </h3>
+
+      <!-- Selector de archivos múltiples -->
+      <div class="form-group">
+        <label for="fileUpload">Seleccionar Archivos</label>
+        <div class="file-upload-area">
+          <input
+            id="fileUpload"
+            type="file"
+            multiple
+            accept="image/*,.pdf,.doc,.docx"
+            (change)="onFileSelect($event)"
+            class="file-input"
+          />
+          <div class="file-upload-content">
+            <div class="upload-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7,10 12,15 17,10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </div>
+            <p class="upload-text">Arrastra archivos aquí o haz clic para seleccionar</p>
+            <p class="upload-hint">Imágenes, PDF, documentos (máx. 10MB)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista previa de archivos seleccionados -->
+      <div class="selected-files" *ngIf="selectedFiles.length > 0">
+        <h4>Archivos seleccionados:</h4>
+        <div class="file-list">
+          <div class="file-item" *ngFor="let file of selectedFiles; let i = index">
+            <div class="file-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2Z"/>
+                <polyline points="14,2 14,8 20,8"/>
+              </svg>
+            </div>
+            <div class="file-info">
+              <span class="file-name">{{ file.name }}</span>
+              <span class="file-size">{{ formatFileSize(file.size) }}</span>
+            </div>
+            <button type="button" class="remove-file-btn" (click)="removeFile(i)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista previa de imágenes -->
+      <div class="image-previews" *ngIf="uploadedImagePreviews.length > 0">
+        <h4>Vista previa de imágenes:</h4>
+        <div class="preview-grid">
+          <div class="preview-item" *ngFor="let preview of uploadedImagePreviews">
+            <img [src]="preview" alt="Vista previa" />
+            <div class="preview-overlay">
+              <button type="button" class="preview-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="M21 21l-4.35-4.35"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Campos de archivo existentes -->
+      <div class="existing-files" *ngIf="hasExistingFiles()">
+        <h4>Archivos existentes:</h4>
+
+        <div class="form-group" *ngIf="modalData.filePath1">
+          <label for="filePath1">Archivo 1</label>
+          <div class="file-display">
+            <div class="file-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2Z"/>
+                <polyline points="14,2 14,8 20,8"/>
+              </svg>
+            </div>
+            <input
+              id="filePath1"
+              name="filePath1"
+              type="text"
+              [(ngModel)]="modalData.filePath1"
+              placeholder="Ruta o nombre del archivo 1"
+              readonly
+            />
+            <button type="button" class="view-file-btn" (click)="viewFile(modalData.filePath1)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+            <button type="button" class="remove-existing-btn" (click)="removeExistingFile(1)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="modalData.filePath2">
+          <label for="filePath2">Archivo 2</label>
+          <div class="file-display">
+            <div class="file-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2Z"/>
+                <polyline points="14,2 14,8 20,8"/>
+              </svg>
+            </div>
+            <input
+              id="filePath2"
+              name="filePath2"
+              type="text"
+              [(ngModel)]="modalData.filePath2"
+              placeholder="Ruta o nombre del archivo 2"
+              readonly
+            />
+            <button type="button" class="view-file-btn" (click)="viewFile(modalData.filePath2)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+            <button type="button" class="remove-existing-btn" (click)="removeExistingFile(2)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="modalData.filePath3">
+          <label for="filePath3">Archivo 3</label>
+          <div class="file-display">
+            <div class="file-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2Z"/>
+                <polyline points="14,2 14,8 20,8"/>
+              </svg>
+            </div>
+            <input
+              id="filePath3"
+              name="filePath3"
+              type="text"
+              [(ngModel)]="modalData.filePath3"
+              placeholder="Ruta o nombre del archivo 3"
+              readonly
+            />
+            <button type="button" class="view-file-btn" (click)="viewFile(modalData.filePath3)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+            <button type="button" class="remove-existing-btn" (click)="removeExistingFile(3)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vista captura -->
+    <div class="form-section">
+      <h3 class="section-title">
+        <span class="section-icon">📸</span>
+        Vista Captura
+      </h3>
+
+      <div class="form-group">
+        <label for="viewCapturePath">Número de Vista Captura</label>
+        <div class="input-wrapper number-input">
+          <input
+            id="viewCapturePath"
+            name="viewCapturePath"
+            type="number"
+            [(ngModel)]="modalData.viewCapturePath"
+            placeholder="0"
+            min="0"
+          />
+          <span class="input-border"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Información del Sistema -->
+    <div class="form-section readonly-section">
+      <h3 class="section-title">
+        <span class="section-icon">⚙️</span>
+        Información del Sistema
+      </h3>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Item</label>
+          <input type="text" class="form-control" [(ngModel)]="modalData.item" />
+        </div>
+      
+        <div class="form-group">
+          <label>Criticidad</label>
+          <select class="form-control" [(ngModel)]="modalData.criticidad">
+            <option value="Alta">Alta</option>
+            <option value="Media">Media</option>
+            <option value="Baja">Baja</option>
+          </select>
+        </div>
+      
+        <div class="form-group">
+          <label>Red</label>
+          <select class="form-control" [(ngModel)]="modalData.red">
+            <option value="Eléctrica">Eléctrica</option>
+            <option value="Telecomunicaciones">Telecomunicaciones</option>
+          </select>
+        </div>
+      
+        <div class="form-group">
+          <label>Tipo Red</label>
+          <select class="form-control" [(ngModel)]="modalData.tipoRed">
+            <option value="Distribución">Distribución</option>
+            <option value="Transmisión">Transmisión</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="form-actions">
+      <button
+        type="button"
+        class="cancel-btn"
+        (click)="closeBar()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+        Cancelar
       </button>
-    </section>
-  </div>
+      <button
+        type="submit"
+        [disabled]="!isFormValid()"
+        class="save-btn"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20,6 9,17 4,12"></polyline>
+        </svg>
+        Guardar Cambios
+      </button>
+    </div>
+  </form>
 </div>
-
-<!-- Overlay -->
-<div class="overlay"
-     *ngIf="visible"
-     (click)="closeBar()"
-     [@slideIn]></div>

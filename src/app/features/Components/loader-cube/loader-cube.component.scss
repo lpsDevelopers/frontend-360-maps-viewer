@@ -2,7 +2,7 @@ $light-cyan: rgba(214, 255, 246, 0.79);
 $russian-violet: rgb(0, 255, 214);
 
 $light-coral: #00b7ff;
-$background: rgba(70, 113, 223, 0);
+$background: #4671df;
 
 $size: 280px;
 $animation-duration: 2s;
@@ -18,7 +18,6 @@ $animation-duration: 2s;
   display: flex;
   justify-content: center;
   align-items: center;
-  backdrop-filter: blur(4px);
 }
 
 .cube-wrapper {

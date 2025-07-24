@@ -1,0 +1,224 @@
+<div class="multi-image-uploader">
+  <!-- Área de carga -->
+  <div class="upload-area">
+    <input
+      type="file"
+      accept="image/*"
+      (change)="onFilesSelected($event)"
+      id="imageInput"
+      class="file-input"
+      multiple
+    />
+    <label for="imageInput" class="upload-label">
+      <span>Seleccionar imágenes</span>
+      <small>Múltiples archivos - Máximo 10MB cada uno - JPEG, PNG</small>
+      <small>Máximo {{ maxImages }} imágenes</small>
+    </label>
+  </div>
+
+  <!-- Estado global de procesamiento -->
+  <div *ngIf="globalProcessingState.isProcessingAny" class="global-loading">
+    <div class="loading-progress">
+      <span>Procesando imágenes... ({{ globalProcessingState.processedCount }}/{{ globalProcessingState.totalCount }})</span>
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="(globalProcessingState.processedCount / globalProcessingState.totalCount) * 100"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resumen de imágenes -->
+  <div *ngIf="processedImages.length > 0" class="images-summary">
+    <div class="summary-header">
+      <h3>Imágenes cargadas ({{ processedImages.length }}/{{ maxImages }})</h3>
+      <div class="summary-actions">
+        <button (click)="onRemoveAllImages()" class="btn btn-danger">
+          Eliminar todas
+        </button>
+        <button (click)="uploadAllFiles()" class="btn btn-primary" [disabled]="isUploadingAll">
+          {{ isUploadingAll ? 'Subiendo...' : 'Subir todas las imágenes' }}
+        </button>
+      </div>
+    </div>
+    <div class="summary-stats">
+      <div class="stat">
+        <strong>Total:</strong> {{ processedImages.length }} imágenes
+      </div>
+      <div class="stat">
+        <strong>Tamaño total:</strong> {{ getTotalFileSize() }}
+      </div>
+      <div class="stat">
+        <strong>Con ubicación:</strong> {{ getImagesWithLocation().length }}
+      </div>
+      <div class="stat" *ngIf="getImagesWithErrors().length > 0">
+        <strong>Con errores:</strong> {{ getImagesWithErrors().length }}
+      </div>
+      <div class="stat" *ngIf="getImagesWithUrls().length > 0">
+        <strong>Con URL:</strong> {{ getImagesWithUrls().length }}
+      </div>
+    </div>
+  </div>
+
+  <div class="images-container" *ngIf="processedImages.length > 0">
+    <div *ngFor="let image of processedImages; trackBy: trackByImageId" class="image-card">
+      <div class="image-header">
+        <h4>{{ image.metadata.fileName }}</h4>
+        <button (click)="onRemoveImage(image.id)" class="btn-remove">
+          ✕
+        </button>
+      </div>
+
+      <div class="image-preview" *ngIf="image.preview">
+        <img [src]="image.preview" [alt]="image.metadata.fileName" />
+      </div>
+
+      <div *ngIf="image.processingState.isProcessing" class="loading">
+        <span>Procesando...</span>
+      </div>
+
+      <div *ngIf="image.processingState.hasError" class="error">
+        {{ image.processingState.errorMessage }}
+      </div>
+
+      <div *ngIf="!image.processingState.isProcessing && !image.processingState.hasError" class="metadata-container">
+        <div class="metadata-section">
+          <h5>Archivo</h5>
+          <div class="metadata-row">
+            <span><strong>Tamaño:</strong> {{ getFileSize(image.metadata.fileSize || 0) }}</span>
+            <span><strong>Tipo:</strong> {{ image.metadata.fileType || 'No disponible' }}</span>
+          </div>
+        </div>
+
+        <div class="metadata-section" *ngIf="image.metadata.make || image.metadata.model">
+          <h5>Cámara</h5>
+          <div class="metadata-row">
+            <span><strong>Marca:</strong> {{ image.metadata.make || 'No disponible' }}</span>
+            <span><strong>Modelo:</strong> {{ image.metadata.model || 'No disponible' }}</span>
+          </div>
+        </div>
+
+        <div class="metadata-section">
+          <h5>Datos técnicos</h5>
+          <div class="metadata-grid">
+            <div class="metadata-item">
+              <strong>Fecha:</strong> {{ image.metadata.datetime || 'No disponible' }}
+            </div>
+            <div class="metadata-item">
+              <strong>ISO:</strong> {{ image.metadata.iso || 'No disponible' }}
+            </div>
+            <div class="metadata-item">
+              <strong>Apertura:</strong> {{ image.metadata.aperture || 'No disponible' }}
+            </div>
+            <div class="metadata-item">
+              <strong>Velocidad:</strong> {{ image.metadata.shutterSpeed || 'No disponible' }}
+            </div>
+            <div class="metadata-item">
+              <strong>Focal:</strong> {{ image.metadata.focalLength || 'No disponible' }}
+            </div>
+            <div class="metadata-item">
+              <strong>Orientación:</strong> {{ image.metadata.orientation || 'No disponible' }}
+            </div>
+          </div>
+        </div>
+
+        <div class="metadata-section" *ngIf="hasLocation(image)">
+          <h5>Ubicación</h5>
+          <div class="location-info">
+            <div class="metadata-item">
+              <strong>Coordenadas:</strong> {{ getLocationString(image) }}
+            </div>
+            <div class="metadata-item" *ngIf="image.direccion">
+              <strong>Dirección:</strong> {{ image.direccion }}
+            </div>
+            <div class="metadata-item" *ngIf="!image.direccion">
+              <strong>Dirección:</strong> <span class="loading-text">Obteniendo...</span>
+            </div>
+            <button (click)="onOpenMaps(image)" class="btn-maps">
+              Ver en Google Maps
+            </button>
+          </div>
+        </div>
+
+        <div class="metadata-section" *ngIf="image.metadata.latitude && image.metadata.longitude">
+          <h5>Coordenadas GPS</h5>
+          <div class="metadata-row">
+            <span><strong>Latitud:</strong> {{ image.metadata.latitude.toFixed(6) }}</span>
+            <span><strong>Longitud:</strong> {{ image.metadata.longitude.toFixed(6) }}</span>
+          </div>
+        </div>
+
+        <!-- Sección de URL -->
+        <div class="metadata-section upload-section">
+          <h5>Subir imagen</h5>
+          <div class="upload-actions">
+            <button
+              (click)="uploadSingleFile(image)"
+              class="btn-upload"
+              [disabled]="image.isUploading || image.uploadedUrl"
+              [class.uploading]="image.isUploading">
+              <span *ngIf="!image.isUploading && !image.uploadedUrl">📤 Generar URL</span>
+              <span *ngIf="image.isUploading">⏳ Subiendo...</span>
+              <span *ngIf="image.uploadedUrl">✅ Subida</span>
+            </button>
+          </div>
+
+          <!-- Mostrar URL generada -->
+          <div *ngIf="image.uploadedUrl" class="url-section">
+            <div class="url-container">
+              <label><strong>URL generada:</strong></label>
+              <div class="url-display">
+                <input
+                  type="text"
+                  [value]="image.uploadedUrl"
+                  readonly
+                  class="url-input"
+                  #urlInput>
+                <button
+                  (click)="copyToClipboard(image.uploadedUrl, urlInput)"
+                  class="btn-copy"
+                  title="Copiar URL">
+                  📋
+                </button>
+                <button
+                  (click)="openImageInNewTab(image.uploadedUrl)"
+                  class="btn-open"
+                  title="Abrir imagen">
+                  🔗
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mostrar error de upload -->
+          <div *ngIf="image.uploadError" class="upload-error">
+            <strong>Error al subir:</strong> {{ image.uploadError }}
+            <button (click)="retryUpload(image)" class="btn-retry">
+              🔄 Reintentar
+            </button>
+          </div>
+
+          <!-- Mostrar información del archivo subido -->
+          <div *ngIf="image.uploadedFileInfo" class="upload-info">
+            <div class="info-grid">
+              <div class="info-item">
+                <strong>ID:</strong> {{ image.uploadedFileInfo.id }}
+              </div>
+              <div class="info-item">
+                <strong>Bucket:</strong> {{ image.uploadedFileInfo.s3Bucket }}
+              </div>
+              <div class="info-item">
+                <strong>Tamaño:</strong> {{ getFileSize(image.uploadedFileInfo.size) }}
+              </div>
+              <div class="info-item">
+                <strong>Fecha subida:</strong> {{ formatDate(image.uploadedFileInfo.createdAt) }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="processedImages.length === 0 && !globalProcessingState.isProcessingAny" class="no-images">
+    <p>No hay imágenes cargadas. Selecciona archivos para comenzar.</p>
+  </div>
+</div>

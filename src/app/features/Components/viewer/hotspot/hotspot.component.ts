@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ModalData, ModalService } from "../../../Services/viewer-360/modal/modal.service";
+import {  ModalService } from "../../../Services/viewer-360/modal/modal.service";
+import { HotspotSelected, Hotspot} from "../../../Model/types";
 interface NotificationState {
   show: boolean;
   type: 'success' | 'error';
@@ -19,32 +20,50 @@ export class HotspotComponent implements OnInit, OnDestroy {
   saveSuccess = false;
   private notificationTimeout?: number;
 
-  modalData: ModalData = {
+  modalData: Hotspot = {
+    // Campos directos (mapeo 1:1)
     id: 0,
-    label: '',
-    description: '',
-    locationId: 0,
-    equipment_location: '',
-    street_name: '',
-    street_number: '',
-    province: '',
-    locality: '',
-    postal_code: '',
-    identifier: '',
-    project: '',
-    new_equipment_location: '',
-    assigned_to: '',
-    location_details: '',
-    repair_type: '',
-    repair_type_2: '',
-    registration_date: '',
-    latitude: 0,
-    longitude: 0,
-    additional_notes: '',
-    other_repair_type_1: '',
-    other_repair_type_2: '',
+    pitch: 0,
+    yaw: 0,
     theta: 0,
     phi: 0,
+    panoramasId: 0,
+
+    // Campos renombrados
+    codigoPosteAntiguo:  '',       // label -> codigoPosteAntiguo
+    nombreVia: '',                // title -> nombreVia
+    trabajoARealizar: '',          // text -> trabajoARealizar
+    observacion1: '',       // description -> observacion1
+    filePath1: '',             // filePath -> filePath1
+    tipoPoste: 'poste',     // typeHotspot -> tipoPoste
+    condicion:  'Activo' , // state -> condicion
+
+    // Campos transformados
+    viewCapturePath: 0,
+
+    // Nuevos campos con valores por defecto
+    item: 0,
+    criticidad: '',
+    red: '',
+    tipoRed: '',
+    alturaSoporte: 8.5,
+    alturaVano: 6.0,
+    codigoDistrito: '',
+    tipoVia: 'Calle',
+    numero: 'S/N',
+    manzana: '',
+    lote: '',
+    coordenadas: '',
+    latitudS: '',
+    longitudW: '',
+    urbanizacion: '',
+    posteSiguiente: '',
+    observacion2: '',
+    observacion3: '',
+    filePath2: '',
+    filePath3: '',
+
+
   };
   public hideNotification(): void {
     this.notification.show = false;

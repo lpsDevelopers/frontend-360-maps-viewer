@@ -64,26 +64,19 @@ export class AuthService {
     const token = this.getToken();
     const user = this.currentUserValue;
     const isValid = !!token && !!user && !this.isTokenExpired();
-
     this.isAuthenticatedSubject.next(isValid);
     return isValid;
   }
 
   login(response: any): void {
     const token = response.data;
-
     const decodedToken: any = jwtDecode(token);
-
-
     const user: UserEmailToken = {
       email: decodedToken.email,
     };
-
-
     this.setToken(token);
     this.setCurrentUser(user);
     this.isAuthenticatedSubject.next(true);
-
     // Carga el usuario completo desde la API y actualiza fullUserSubject
     this.loadFullUser();
   }
