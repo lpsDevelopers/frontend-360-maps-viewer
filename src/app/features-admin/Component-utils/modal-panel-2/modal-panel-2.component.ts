@@ -22,6 +22,11 @@ export class ModalPanel2Component implements  OnInit, OnDestroy {
   private headerSubscription: Subscription = new Subscription();
   debug: boolean = true;
 
+
+  locations: any[] = [];
+  loadingLocations = false;
+
+
   availableFilterTypes: any[] = [
     {
       id: '1',
@@ -135,6 +140,59 @@ export class ModalPanel2Component implements  OnInit, OnDestroy {
   ) {
     this.addFilter();
   }
+  handleLocationError() {
+    // Datos de respaldo en caso de error
+    this.locations = [
+      { id: 1, name: 'Ubicación no disponible', description: 'Error de conexión' }
+    ];
+  }
+
+  getLocationNameById(locationId: number): string {
+    if (!locationId) return 'Seleccionar ubicación';
+    const location = this.locations.find(loc => loc.id === locationId);
+    return location ? location.name : `Ubicación ${locationId}`;
+  }
+
+  onLocationChange(index: number, event: Event) {
+    const target = event.target as HTMLSelectElement;
+    const selectedLocationId = parseInt(target.value);
+
+    if (selectedLocationId) {
+      this.filters[index]['locationId'] = selectedLocationId;
+      console.log(`Ubicación seleccionada: ${selectedLocationId} en fila ${index}`);
+    } else {
+      this.filters[index]['locationId'] = null;
+    }
+  }
+
+  isLocationField(header: string): boolean {
+    return header === 'locationId';
+  }
+
+
+
+  loadLocations() {
+    this.loadingLocations = true;
+
+    this.endpointService.allLocations().subscribe({
+      next: (response) => {
+        if (response.isSucces && response.data) {
+          this.locations = response.data;
+          console.log('Ubicaciones cargadas:', this.locations);
+        } else {
+          console.error('Error en la respuesta:', response.message);
+          this.handleLocationError();
+        }
+        this.loadingLocations = false;
+      },
+      error: (error) => {
+        console.error('Error cargando ubicaciones:', error);
+        this.handleLocationError();
+        this.loadingLocations = false;
+      }
+    });
+  }
+
   readCSV(file: File): void {
     const reader = new FileReader();
 
@@ -264,7 +322,7 @@ export class ModalPanel2Component implements  OnInit, OnDestroy {
       .toLowerCase();
   }
   ngOnInit() {
-
+    this.loadLocations();
     const postes = this.addRecords.find(r => r.id === '1');
     if (postes) {
       this.columnHeaders = postes.headers;
@@ -285,7 +343,22 @@ export class ModalPanel2Component implements  OnInit, OnDestroy {
 
   createEmptyFilter(headers: string[]) {
     const row: any = {};
-    headers.forEach(h => row[h] = '');
+    headers.forEach(h => {
+      switch (h) {
+        case 'locationId':
+          row[h] = null; // Sin seleccionar por defecto
+          break;
+        case 'latitude':
+        case 'longitude':
+          row[h] = 0;
+          break;
+        case 'hasHotspots':
+          row[h] = 0;
+          break;
+        default:
+          row[h] = '';
+      }
+    });
     return row;
   }
 
@@ -567,7 +640,6 @@ export class ModalPanel2Component implements  OnInit, OnDestroy {
       if (response && response.s3Bucket && response.s3Key) {
         return this.generateS3Url(response.s3Bucket, response.s3Key);
       }
-
       throw new Error('Respuesta inválida del servidor');
     } catch (error) {
       console.error('Error subiendo imagen:', error);
@@ -964,7 +1036,7 @@ export class ModalPanel2Component implements  OnInit, OnDestroy {
     // Procesar cada filtro/registro
     this.filters.forEach((filter, index) => {
       const panoramaPayload = {
-        id: 0, // o null si es un nuevo registro
+        id: 0,
         locationId: Number(filter['locationId']) || 0,
         filename: filter['filename'] || '',
         address: filter['address'] || '',

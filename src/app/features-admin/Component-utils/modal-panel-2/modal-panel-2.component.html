@@ -4,7 +4,6 @@
     <button class="close-btn" (click)="closeHideOrbitCard()">×</button>
   </div>
   <div class="modal-header">
-
     <div class="upload-area">
       <input
         type="file"
@@ -20,21 +19,17 @@
         <small>Máximo {{ maxImages }} imágenes</small>
       </label>
     </div>
-
   </div>
   <div class="album-container" *ngIf="processedImages.length > 0">
     <div
       *ngFor="let image of processedImages.slice(0, 20); trackBy: trackByImageId"
-      class="album-card"
-    >
+      class="album-card" >
       <!-- Botón eliminar -->
       <button (click)="onRemoveImage(image.id)" class="btn-remove">✕</button>
-
       <!-- Vista previa pequeña -->
       <div class="album-preview" *ngIf="image.preview">
         <img [src]="image.preview" [alt]="image.metadata.fileName" />
       </div>
-
       <!-- Estado / Error -->
       <div *ngIf="image.processingState.isProcessing" class="album-status processing">
         Procesando...
@@ -45,33 +40,62 @@
     </div>
   </div>
   <div class="modal-content scroll-wrapper">
-    <div class="table-header">
-      <div class="col" *ngFor="let header of columnHeaders">
-        {{ header }}
-      </div>
+    <!-- Loading de ubicaciones -->
+    <div *ngIf="loadingLocations" class="loading-message">
+      <i class="fas fa-spinner fa-spin"></i>
+      Cargando ubicaciones...
     </div>
 
+    <div class="table-header">
+      <div class="col" *ngFor="let header of columnHeaders">
+        {{ header === 'locationId' ? 'Ubicación' : header }}
+      </div>
+      <div class="col">Acciones</div>
+    </div>
     <div class="table-row" *ngFor="let row of filters; let i = index">
       <div class="col" *ngFor="let header of columnHeaders">
+
+        <!-- Select para locationId -->
+        <select
+          *ngIf="isLocationField(header)"
+          [value]="row[header] || ''"
+          (change)="onLocationChange(i, $event)"
+          class="input-field location-select"
+          [disabled]="loadingLocations">
+
+          <option value="" disabled>
+            {{ loadingLocations ? 'Cargando...' : 'Seleccionar ubicación' }}
+          </option>
+          <option
+            *ngFor="let location of locations"
+            [value]="location.id">
+            {{ location.name }}
+          </option>
+        </select>
+
+        <!-- Input normal para otros campos -->
         <input
+          *ngIf="!isLocationField(header)"
           class="input-field"
+          [type]="header === 'latitude' || header === 'longitude' ? 'number' : 'text'"
           [(ngModel)]="row[header]"
-          [placeholder]="header" />
+          [placeholder]="header"
+          [step]="header === 'latitude' || header === 'longitude' ? 'any' : null" />
       </div>
       <div class="col">
         <button class="delete-btn" (click)="removeFilter(i)">X</button>
       </div>
     </div>
   </div>
-
   <div class="modal-footer">
     <button class="add-btn" (click)="addFilter()">+</button>
     <div class="footer-actions">
       <p class="error-message" *ngIf="showErrorMessage">{{ errorMessage }}</p>
-      <button class="apply-btn" (click)="addPanoramaInDataBase()">Registrar en la Base de Datos</button>
+      <button class="apply-btn" (click)="addPanoramaInDataBase()" [disabled]="loadingLocations">
+        Registrar en la Base de Datos
+      </button>
     </div>
   </div>
-
   <div class="save-config-modal" *ngIf="showSaveConfigModal">
     <div class="save-modal-content">
       <div class="save-modal-header">
@@ -115,3 +139,4 @@
     </div>
   </div>
 </div>
+

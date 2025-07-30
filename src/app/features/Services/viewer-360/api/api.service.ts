@@ -9,7 +9,7 @@ import { map } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class ApiService {
-  private readonly apiUrl = 'https://ec2-52-47-50-36.eu-west-3.compute.amazonaws.com/api';
+  private readonly apiUrl = 'https://localhost:44331/api';
   private readonly timeoutDuration = 15000;
   constructor(private http: HttpClient) {}
 
@@ -64,7 +64,7 @@ export class ApiService {
     );
   }
   uploadFile(formData: FormData) {
-    return this.http.post('https://ec2-52-47-50-36.eu-west-3.compute.amazonaws.com/api/Files/upload', formData, {
+    return this.http.post('https://localhost:44331/api/Files/upload', formData, {
       responseType: 'text'  // Porque tu curl acepta 'text/plain'
     });
   }

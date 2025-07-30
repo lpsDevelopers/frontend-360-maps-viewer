@@ -9,7 +9,7 @@ import {LoginResponse, ApiResponse, Location, Panorama, User} from '../../Model/
 })
 export class EndpointService {
 
-  private readonly apiUrl = 'https://ec2-52-47-50-36.eu-west-3.compute.amazonaws.com/api';
+  private readonly apiUrl = 'https://localhost:44331/api';
   private readonly timeoutDuration = 15000;
 
   // Caché para panoramas por locationId

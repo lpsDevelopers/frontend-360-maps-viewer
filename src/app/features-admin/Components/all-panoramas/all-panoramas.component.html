@@ -13,6 +13,7 @@
 
   <!-- Filtros -->
   <div class="filters-section">
+
     <div class="left-actions">
       <button
         (click)="onOpenModal()"
@@ -33,6 +34,7 @@
       <input type="text" [(ngModel)]="filters.viewerUrl" (input)="applyFilters()" placeholder="Buscar URL visor" />
     </div>
   </div>
+
 
 
   <!-- Tabla -->
@@ -62,6 +64,7 @@
     <i class="fas fa-search-minus"></i>
     <p>No se encontraron resultados que coincidan con los filtros.</p>
   </div>
+
   <!-- Paginación -->
   <div *ngIf="totalPages > 1" class="pagination">
     <button class="page-btn" [disabled]="currentPage === 1" (click)="previousPage()">
@@ -88,7 +91,6 @@
 
 <app-modal-panel-2
   *ngIf="isModalVisible"
-  (closeModal)="onCloseModal()"
->
+  (closeModal)="onCloseModal()">
 
 </app-modal-panel-2>

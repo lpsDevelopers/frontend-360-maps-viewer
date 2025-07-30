@@ -176,10 +176,6 @@ export class AdminAuthService {
     return hasPerm;
   }
 
-
-
-
-
   getUserFullName(): string {
     const user = this.currentUserValue;
     const fullName = user ? `${user.firstName} ${user.lastName}` : '';
