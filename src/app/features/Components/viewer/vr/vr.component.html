@@ -1,18 +1,209 @@
 <div class="vr-container">
-  <!-- Contenedor principal para VR -->
-  <div  class="vr-viewer">
-    <app-loader-cube ></app-loader-cube>
+  <div class="vr-viewer">
+    <app-loader-cube></app-loader-cube>
     <div class="sphere"></div>
-    <app-hotspot></app-hotspot><app-open-hotspot></app-open-hotspot>
-
-
+    <app-open-hotspot></app-open-hotspot>
     <div
       class="tooltip"
       *ngIf="tooltipVisible"
       [ngStyle]="{ left: tooltipX + 'px', top: tooltipY + 'px' }">
       {{ tooltipLabel }}
     </div>
+    <div class="leveling-info" *ngIf="showLevelerInfo" [@toggleVisibility]>
+      <div class="info-header">
+        <i class="fas fa-level"></i>
+        <span>Información de Nivelación</span>
+        <button class="close-btn" (click)="toggleLevelerInfo()">×</button>
+      </div>
+      <div class="info-content">
+        <div class="info-item">
+          <span class="label">Panorama:</span>
+          <span class="value">{{ currentPanoramaId || 'N/A' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Ángulo:</span>
+          <span class="value" [class.warning]="Math.abs(currentLevelAngle) > 10">
+            {{ currentLevelAngle.toFixed(1) }}°
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="label">Estado:</span>
+          <span class="value" [class]="levelStatus.class">
+            {{ levelStatus.text }}
+          </span>
+        </div>
+        <div class="stats-section">
+          <div class="stats-title">Estadísticas:</div>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-value">{{ levelingStats.totalPanoramas }}</span>
+              <span class="stat-label">Total</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">{{ levelingStats.leveledPanoramas }}</span>
+              <span class="stat-label">Nivelados</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">{{ levelingStats.avgRollAngle.toFixed(1) }}°</span>
+              <span class="stat-label">Promedio</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
+    <!-- CONTROLES ESPECÍFICOS DE NIVELACIÓN (solo botones) -->
+    <div class="leveling-controls-overlay" *ngIf="isLevelerActive">
+      <!-- Botón toggle principal (oculto, que busca el servicio) -->
+      <button class="level-toggle-btn" style="display: none;">Toggle Leveling</button>
+
+      <!-- Título de controles -->
+      <div class="controls-title">
+        <i class="fas fa-level"></i>
+        <span>Control de Nivelación Completo</span>
+      </div>
+
+      <!-- ✅ NUEVO: Display de ángulos actuales -->
+      <div class="angles-display">
+        <div class="angle-item">
+          <span class="angle-label">Roll (Horizontal)</span>
+          <span class="angle-value">{{ currentRollAngle.toFixed(1) }}°</span>
+        </div>
+        <div class="angle-item">
+          <span class="angle-label">Pitch (Vertical)</span>
+          <span class="angle-value">{{ currentPitchAngle.toFixed(1) }}°</span>
+        </div>
+        <div class="angle-item">
+          <span class="angle-label">Yaw (Rotación)</span>
+          <span class="angle-value">{{ currentYawAngle.toFixed(1) }}°</span>
+        </div>
+      </div>
+
+      <!-- Controles de Roll (Horizontal) -->
+      <div class="rotation-section">
+        <div class="section-title">
+          <i class="fas fa-arrows-alt-h"></i>
+          <span>Roll - Nivelación Horizontal</span>
+        </div>
+        <div class="level-rotation-controls">
+          <button class="level-left-btn" (click)="rotateLeft()" title="Roll izquierda -1°">
+            <i class="fas fa-chevron-left"></i>
+            <span>-1°</span>
+          </button>
+          <div class="level-display-container">
+            <div class="level-display">{{ currentRollAngle.toFixed(1) }}°</div>
+            <div class="level-label">Roll</div>
+          </div>
+          <button class="level-right-btn" (click)="rotateRight()" title="Roll derecha +1°">
+            <i class="fas fa-chevron-right"></i>
+            <span>+1°</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ✅ NUEVO: Controles de Pitch (Vertical) -->
+      <div class="rotation-section">
+        <div class="section-title">
+          <i class="fas fa-arrows-alt-v"></i>
+          <span>Pitch - Inclinación Vertical</span>
+        </div>
+        <div class="level-rotation-controls">
+          <button class="level-up-btn" (click)="rotateUp()" title="Pitch arriba +1°">
+            <i class="fas fa-chevron-up"></i>
+            <span>+1°</span>
+          </button>
+          <div class="level-display-container">
+            <div class="level-display">{{ currentPitchAngle.toFixed(1) }}°</div>
+            <div class="level-label">Pitch</div>
+          </div>
+          <button class="level-down-btn" (click)="rotateDown()" title="Pitch abajo -1°">
+            <i class="fas fa-chevron-down"></i>
+            <span>-1°</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ✅ NUEVO: Controles de Yaw (Rotación) -->
+      <div class="rotation-section">
+        <div class="section-title">
+          <i class="fas fa-sync-alt"></i>
+          <span>Yaw - Rotación Horizontal</span>
+        </div>
+        <div class="level-rotation-controls">
+          <button class="level-yaw-left-btn" (click)="rotateYawLeft()" title="Yaw izquierda -1°">
+            <i class="fas fa-undo"></i>
+            <span>-1°</span>
+          </button>
+          <div class="level-display-container">
+            <div class="level-display">{{ currentYawAngle.toFixed(1) }}°</div>
+            <div class="level-label">Yaw</div>
+          </div>
+          <button class="level-yaw-right-btn" (click)="rotateYawRight()" title="Yaw derecha +1°">
+            <i class="fas fa-redo"></i>
+            <span>+1°</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Controles de ajuste fino -->
+      <div class="level-fine-controls">
+        <span class="fine-label">Ajuste Fino Roll:</span>
+        <button class="level-fine-left" (click)="rotateFineLeft()" title="Ajuste fino -0.1°">
+          <i class="fas fa-angle-left"></i>
+          <span>-0.1°</span>
+        </button>
+        <button class="level-fine-right" (click)="rotateFineRight()" title="Ajuste fino +0.1°">
+          <i class="fas fa-angle-right"></i>
+          <span>+0.1°</span>
+        </button>x
+      </div>
+
+      <!-- Presets rápidos para Roll -->
+      <div class="level-presets">
+        <span class="presets-label">Presets Roll:</span>
+        <div class="preset-buttons">
+          <button class="preset-btn" (click)="applyPreset(-10)" title="Roll -10°">-10°</button>
+          <button class="preset-btn" (click)="applyPreset(-5)" title="Roll -5°">-5°</button>
+          <button class="preset-btn" (click)="applyPreset(0)" title="Roll 0°">0°</button>
+          <button class="preset-btn" (click)="applyPreset(5)" title="Roll +5°">+5°</button>
+          <button class="preset-btn" (click)="applyPreset(10)" title="Roll +10°">+10°</button>
+        </div>
+      </div>
+
+      <!-- ✅ NUEVO: Presets combinados -->
+      <div class="level-presets">
+        <span class="presets-label">Presets Combinados:</span>
+        <div class="preset-buttons">
+          <button class="preset-combo-btn" (click)="applyFullPreset(0, 0, 0)" title="Reset completo">
+            Reset Total
+          </button>
+          <button class="preset-combo-btn" (click)="applyFullPreset(-5, 2, 0)" title="Común izquierda">
+            Común Izq
+          </button>
+          <button class="preset-combo-btn" (click)="applyFullPreset(5, 2, 0)" title="Común derecha">
+            Común Der
+          </button>
+          <button class="preset-combo-btn" (click)="reloadCurrentLeveling()" title="Recargar desde BD">
+            <i class="fas fa-sync"></i>
+            Recargar
+          </button>
+        </div>
+      </div>
+
+      <!-- ✅ ACTUALIZADO: Controles de acción con botón de guardar -->
+      <div class="level-action-controls">
+        <button class="level-reset-btn" (click)="resetLevelingButton()" title="Resetear todos los ángulos">
+          <i class="fas fa-undo"></i>
+          <span>Reset Todo</span>
+        </button>
+        <button class="level-save-btn" (click)="saveLevelingButton()" title="Guardar toda la nivelación">
+          <i class="fas fa-save"></i>
+          <span>Guardar Todo</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Botón de retroceso -->
     <button class="back-btn btn" (click)="onBackButtonClick()">
       <svg
         fill="none"
@@ -20,18 +211,19 @@
         stroke-width="1.5"
         viewBox="0 0 24 24"
         xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-      >
+        aria-hidden="true">
         <path
           stroke-linecap="round"
           stroke-linejoin="round"
-          d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-        ></path>
+          d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18">
+        </path>
       </svg>
     </button>
 
+    <!-- Controles principales -->
     <div class="controls">
-      <button class="btn" (click)="toggleFullScreen()">
+      <!-- Botón de pantalla completa -->
+      <button class="btn" (click)="toggleFullScreen()" title="Pantalla completa">
         <svg
           *ngIf="!OnfullScreenService"
           fill="none"
@@ -39,13 +231,12 @@
           stroke-width="1.5"
           viewBox="0 0 24 24"
           xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
+          aria-hidden="true">
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
-            d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"
-          ></path>
+            d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15">
+          </path>
         </svg>
         <svg
           *ngIf="OnfullScreenService"
@@ -54,35 +245,72 @@
           stroke-width="1.5"
           viewBox="0 0 24 24"
           xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
+          aria-hidden="true">
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
-            d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"
-          ></path>
+            d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25">
+          </path>
         </svg>
       </button>
-
-      <!-- Nuevo botón para toggle del mapa -->
-      <button class="btn" (click)="toggleMap()">
+      <!-- Botón del mapa -->
+      <button class="btn" (click)="toggleMap()" title="Mostrar/Ocultar mapa">
         <svg
           fill="none"
           stroke="currentColor"
           stroke-width="1.5"
           viewBox="0 0 24 24"
           xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
+          aria-hidden="true">
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
-            d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.158.69-.158 1.006 0l4.994 2.497c.317.158.69.158 1.007 0z"
-          ></path>
+            d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.158.69-.158 1.006 0l4.994 2.497c.317.158.69.158 1.007 0z">
+          </path>
         </svg>
       </button>
-
-      <button class="change-mode-btn btn" (click)="showControlInfo()">
+      <!-- Botón del nivelador (PRINCIPAL) -->
+      <button
+        class="btn leveler-btn"
+        [class.active]="isLevelerActive"
+        (click)="toggleLeveler()"
+        title="Activar/Desactivar nivelador">
+        <svg
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 3v18m9-9H3">
+          </path>
+        </svg>
+      </button>
+      <!-- Botón de información del nivelador -->
+      <button
+        class="btn info-btn"
+        [class.active]="showLevelerInfo"
+        (click)="toggleLevelerInfo()"
+        title="Información de nivelación">
+        <svg
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z">
+          </path>
+        </svg>
+      </button>
+      <!-- Botón de cambio de modo (existente) -->
+      <button class="change-mode-btn btn" (click)="showControlInfo()" title="Cambiar modo de control">
         <svg
           class="compass"
           fill="none"
@@ -90,44 +318,60 @@
           stroke-width="1.5"
           viewBox="0 0 24 24"
           xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true" >
-
+          aria-hidden="true">
           <circle cx="12" cy="12" r="9.5" />
           <path d="M18.5 12H19.5" stroke-linecap="round" />
           <path d="M4.5 12H5.5M12 4.5V5.5M12 18.5V19.5" stroke-linecap="round" />
           <path
             d="M7.04924 7.11489L9.36973 12.5294C9.77433 13.4734 10.5266 14.2257 11.4706 14.6303L16.8851 16.9508C16.9266 16.9685 16.9685 16.9266 16.9508 16.8851L14.6303 11.4706C14.2257 10.5266 13.4734 9.77433 12.5294 9.36973L7.11489 7.04924C7.07341 7.03146 7.03146 7.07341 7.04924 7.11489Z"
-            stroke-linecap="round"
-          />
+            stroke-linecap="round">
+          </path>
           <circle cx="12" cy="12" r="2.5" stroke-linecap="round" />
         </svg>
       </button>
+      <!-- Acciones adicionales del nivelador -->
+      <div class="leveler-actions" *ngIf="isLevelerActive">
+        <button
+          class="action-btn export-btn"
+          (click)="exportLevelingData()"
+          title="Exportar configuración">
+          <i class="fas fa-download"></i>
+        </button>
+      </div>
     </div>
 
-    <span *ngIf="controlsInfo === 'Orbit'" class="control-info" [@toggleVisibility]
-    >Camera is contolled by mouse or finger touch</span>
-    <span
-      *ngIf="controlsInfo === 'Orientation'"
-      class="control-info"
-      [@toggleVisibility]
-    >Camera is contolled by device orientation</span>
+    <!-- Mensajes de información de controles -->
+    <span *ngIf="controlsInfo === 'Orbit'" class="control-info" [@toggleVisibility]>
+      Camera is controlled by mouse or finger touch
+    </span>
+    <span *ngIf="controlsInfo === 'Orientation'" class="control-info" [@toggleVisibility]>
+      Camera is controlled by device orientation
+    </span>
+    <span *ngIf="controlsInfo && !controlsInfo.includes('Camera')" class="control-info leveling-message" [@toggleVisibility]>
+      {{ controlsInfo }}
+    </span>
+
+    <!-- Indicador rápido de nivelación -->
+    <div class="quick-level-indicator" *ngIf="isLevelerActive && Math.abs(currentLevelAngle) > 0.1">
+      <div class="level-badge" [class.warning]="Math.abs(currentLevelAngle) > 10">
+        <i class="fas fa-level"></i>
+        {{ currentLevelAngle.toFixed(1) }}°
+      </div>
+    </div>
   </div>
 
   <!-- Contenedor del mapa con toggle -->
   <div class="map-overlay"
-
        [class.map-visible]="showMap"
-       [class.map-hidden]="!showMap"
-  >
+       [class.map-hidden]="!showMap">
     <app-map-test
       [customStyle]="{
-      position: 'absolute',
-      width: '500px',
-      top: '40em',
-      bottom: '2em',
-      left: '2em',
-
-      }"
-    ></app-map-test>
+        position: 'absolute',
+        width: '500px',
+        top: '40em',
+        bottom: '2em',
+        left: '2em'
+      }">
+    </app-map-test>
   </div>
 </div>

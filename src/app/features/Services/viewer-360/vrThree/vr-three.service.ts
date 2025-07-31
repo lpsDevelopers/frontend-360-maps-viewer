@@ -3,11 +3,12 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { ApiService } from "../api/api.service";
 import { Hotspot } from "../../../Model/types";
-import {WebGLRenderer} from "three";
-import { ModalService} from "../modal/modal.service";
-import {Subject} from "rxjs";
-import {OpenHotspotService} from "../openHotspot/open-hotspot.service";
-import {PanoramaSyncService} from "../../panorama-sync/panorama-sync.service";
+import { WebGLRenderer } from "three";
+import { ModalService } from "../modal/modal.service";
+import { Subject } from "rxjs";
+import { OpenHotspotService } from "../openHotspot/open-hotspot.service";
+import { PanoramaSyncService } from "../../panorama-sync/panorama-sync.service";
+import {PanoramaLevelerService} from "../../panorama-leveler/panorama-leveler.service";
 
 @Injectable({
   providedIn: 'root',
@@ -51,12 +52,35 @@ export class VrThreeService implements OnDestroy {
 
   private currentPanoramaId: number | null = null;
 
+  // ===== VARIABLES PARA NIVELACIÓN DE HORIZONTE =====
+  private horizonLevelMode = false;
+  private horizonLine: THREE.Line | null = null;
+  private horizontalRotation = 0; // Rotación en el eje Z para nivelar
+  private pitchRotation = 0; // Rotación en el eje X
+  private yawRotation = 0; // Rotación en el eje Y
+  private levelModeButton: HTMLElement | null = null;
+  private keyHandler: ((event: KeyboardEvent) => void) | undefined;
+  private wheelHandler: ((event: WheelEvent) => void) | undefined;
+  private horizonLevelSubject = new Subject<number>();
+  public horizonLevel$ = this.horizonLevelSubject.asObservable();
+  private levelerService: PanoramaLevelerService;
+
+  // Agregar estas propiedades a la clase VrThreeService
+  private levelLeftButton: HTMLElement | null = null;
+  private levelRightButton: HTMLElement | null = null;
+  private levelResetButton: HTMLElement | null = null;
+  private levelToggleButton: HTMLElement | null = null;
+  private levelDisplay: HTMLElement | null = null;
+
   constructor(
     private apiService: ApiService,
     private modalService: ModalService,
     private openHotspotService: OpenHotspotService,
-    private panoramaSyncService: PanoramaSyncService
-  ) {
+    private panoramaSyncService: PanoramaSyncService,
+    levelerService: PanoramaLevelerService
+
+) {
+    this.levelerService = levelerService;
     this.renderer = new WebGLRenderer();
   }
 
@@ -66,6 +90,40 @@ export class VrThreeService implements OnDestroy {
     console.log('Modo creación de hotspots:', this.creationMode ? 'activado' : 'desactivado');
     if (!enabled && this.tempHotspot) {
       this.removeTempHotspot();
+    }
+  }
+
+  testImageLeveling() {
+    console.log('🧪 Probando nivelación de imagen panorámica...');
+
+    if (!this.sphereMesh) {
+      console.error('❌ No hay esfera disponible para probar');
+      return;
+    }
+
+    // Probar diferentes ángulos de corrección
+    const testAngles = [-10, -5, 0, 5, 10, 15, 0];
+    let currentIndex = 0;
+
+    const testInterval = setInterval(() => {
+      if (currentIndex >= testAngles.length) {
+        clearInterval(testInterval);
+        console.log('✅ Prueba de nivelación de imagen completada');
+        return;
+      }
+
+      const angle = testAngles[currentIndex];
+      console.log(`Probando corrección de imagen: ${angle}°`);
+      this.setHorizonLevel(angle);
+      currentIndex++;
+    }, 1500);
+  }
+
+  async resetCurrentLeveling(): Promise<void> {
+    if (this.currentPanoramaId) {
+      await this.levelerService.resetLevel(this.currentPanoramaId);
+      this.resetHorizonLevel();
+      console.log('🔄 Nivelación de imagen reseteada');
     }
   }
 
@@ -98,6 +156,633 @@ export class VrThreeService implements OnDestroy {
     // 6. Animación
     this.startAnimation();
 
+    // 7. Configuración de botones de nivelación (NUEVO)
+    this.setupLevelingButtons();
+    this.setupTouchControls();
+
+  }
+
+  // Método para configurar los botones de nivelación UI
+
+  private setupAdvancedKeyboardControls(): void {
+    const advancedKeyHandler = (event: KeyboardEvent) => {
+      if (!this.horizonLevelMode) return;
+
+      switch (event.code) {
+        case 'Comma': // Coma para -0.1°
+          this.adjustHorizonLevel(-0.1);
+          event.preventDefault();
+          break;
+        case 'Period': // Punto para +0.1°
+          this.adjustHorizonLevel(0.1);
+          event.preventDefault();
+          break;
+        case 'Digit1':
+          this.setHorizonLevel(-10);
+          event.preventDefault();
+          break;
+        case 'Digit2':
+          this.setHorizonLevel(-5);
+          event.preventDefault();
+          break;
+        case 'Digit3':
+          this.setHorizonLevel(0);
+          event.preventDefault();
+          break;
+        case 'Digit4':
+          this.setHorizonLevel(5);
+          event.preventDefault();
+          break;
+        case 'Digit5':
+          this.setHorizonLevel(10);
+          event.preventDefault();
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', advancedKeyHandler);
+  }
+
+  private cleanupLevelingButtons(): void {
+    if (this.levelLeftButton) {
+      const newButton = this.levelLeftButton.cloneNode(true);
+      this.levelLeftButton.parentNode?.replaceChild(newButton, this.levelLeftButton);
+      this.levelLeftButton = null;
+    }
+
+    if (this.levelRightButton) {
+      const newButton = this.levelRightButton.cloneNode(true);
+      this.levelRightButton.parentNode?.replaceChild(newButton, this.levelRightButton);
+      this.levelRightButton = null;
+    }
+
+    if (this.levelResetButton) {
+      const newButton = this.levelResetButton.cloneNode(true);
+      this.levelResetButton.parentNode?.replaceChild(newButton, this.levelResetButton);
+      this.levelResetButton = null;
+    }
+
+    if (this.levelToggleButton) {
+      const newButton = this.levelToggleButton.cloneNode(true);
+      this.levelToggleButton.parentNode?.replaceChild(newButton, this.levelToggleButton);
+      this.levelToggleButton = null;
+    }
+  }
+
+
+
+  private setupTouchControls(): void {
+    if (!this.renderer?.domElement) return;
+
+    let startX = 0;
+    let isRotating = false;
+
+    const touchStart = (e: TouchEvent) => {
+      if (!this.horizonLevelMode || e.touches.length !== 2) return;
+      startX = e.touches[0].clientX;
+      isRotating = true;
+      e.preventDefault();
+    };
+
+    const touchMove = (e: TouchEvent) => {
+      if (!isRotating || !this.horizonLevelMode || e.touches.length !== 2) return;
+
+      const currentX = e.touches[0].clientX;
+      const deltaX = currentX - startX;
+
+      // Convertir movimiento horizontal a rotación (sensibilidad ajustable)
+      const rotationDelta = deltaX * 0.1; // 0.1° por pixel
+
+      if (Math.abs(rotationDelta) > 0.5) { // Umbral mínimo
+        this.adjustHorizonLevel(rotationDelta);
+        startX = currentX;
+      }
+
+      e.preventDefault();
+    };
+
+    const touchEnd = () => {
+      isRotating = false;
+    };
+
+    this.renderer.domElement.addEventListener('touchstart', touchStart, { passive: false });
+    this.renderer.domElement.addEventListener('touchmove', touchMove, { passive: false });
+    this.renderer.domElement.addEventListener('touchend', touchEnd);
+  }
+
+  private updateLevelingButtonsState(): void {
+    const isActive = this.horizonLevelMode;
+
+    if (this.levelToggleButton) {
+      this.levelToggleButton.classList.toggle('active', isActive);
+      this.levelToggleButton.textContent = isActive ? 'Salir Nivelación' : 'Nivelar Horizonte';
+    }
+
+    if (this.levelLeftButton) {
+      this.levelLeftButton.style.display = isActive ? 'block' : 'none';
+    }
+
+    if (this.levelRightButton) {
+      this.levelRightButton.style.display = isActive ? 'block' : 'none';
+    }
+
+    if (this.levelResetButton) {
+      this.levelResetButton.style.display = isActive ? 'block' : 'none';
+    }
+
+    if (this.levelDisplay) {
+      this.levelDisplay.style.display = isActive ? 'block' : 'none';
+    }
+  }
+
+  private setupLevelingButtons(): void {
+    // Botón para rotar izquierda (-1°)
+    this.levelLeftButton = document.querySelector('.level-left-btn');
+    if (this.levelLeftButton) {
+      this.levelLeftButton.addEventListener('click', () => {
+        if (this.horizonLevelMode) {
+          this.adjustHorizonLevel(-1);
+        }
+      });
+    }
+
+    // Botón para rotar derecha (+1°)
+    this.levelRightButton = document.querySelector('.level-right-btn');
+    if (this.levelRightButton) {
+      this.levelRightButton.addEventListener('click', () => {
+        if (this.horizonLevelMode) {
+          this.adjustHorizonLevel(1);
+        }
+      });
+    }
+
+    // Botón para resetear nivelación
+    this.levelResetButton = document.querySelector('.level-reset-btn');
+    if (this.levelResetButton) {
+      this.levelResetButton.addEventListener('click', () => {
+        this.resetHorizonLevel();
+      });
+    }
+
+    // Botón para activar/desactivar modo nivelación
+    this.levelToggleButton = document.querySelector('.level-toggle-btn');
+    if (this.levelToggleButton) {
+      this.levelToggleButton.addEventListener('click', () => {
+        this.toggleHorizonLevelMode(!this.horizonLevelMode);
+        this.updateLevelingButtonsState();
+      });
+    }
+
+    // Display para mostrar el ángulo actual
+    this.levelDisplay = document.querySelector('.level-display');
+
+    // Suscribirse a cambios de nivelación para actualizar UI
+    this.horizonLevel$.subscribe(angle => {
+      this.updateLevelDisplay(angle);
+    });
+  }
+
+  private updateLevelDisplay(angle: number): void {
+    if (this.levelDisplay) {
+      this.levelDisplay.textContent = `${angle.toFixed(1)}°`;
+    }
+  }
+
+// Métodos públicos para control programático
+  public rotateLeft(degrees: number = 1): void {
+    if (this.horizonLevelMode) {
+      this.adjustHorizonLevel(-degrees);
+    }
+  }
+
+  public rotateRight(degrees: number = 1): void {
+    if (this.horizonLevelMode) {
+      this.adjustHorizonLevel(degrees);
+    }
+  }
+
+  public setFineRotation(degrees: number): void {
+    this.setHorizonLevel(degrees);
+  }
+
+// Método para rotación con incrementos finos (0.1°)
+  public adjustFineLevel(degrees: number): void {
+    this.adjustHorizonLevel(degrees);
+  }
+
+
+
+  private startAnimation() {
+    if (!this.scene || !this.camera) {
+      console.error('No hay escena o cámara disponible para iniciar la animación');
+      return;
+    }
+
+    const animate = () => {
+      this.animationId = requestAnimationFrame(animate);
+
+      // Actualizar controles sin interferir con la rotación de la esfera
+      if (this.orbitControlMode && this.controls) {
+        this.controls.update();
+        // NO tocar this.camera.rotation.z ni this.sphereMesh.rotation aquí
+      }
+
+      if (this.renderer && this.scene && this.camera) {
+        this.renderer.render(this.scene, this.camera);
+      }
+    };
+
+    animate();
+    console.log('Animación iniciada (respetando nivelación de imagen)');
+
+    // Cargar datos del panorama actual
+    const panoramaId = this.panoramaSyncService.getCurrentPanoramaIdSync();
+    if (panoramaId !== null) {
+      this.currentPanoramaId = panoramaId;
+
+      // Cargar nivelación automáticamente al iniciar
+      this.loadAndApplyLeveling(panoramaId);
+
+      // Cargar hotspots
+      this.apiService.getPostesByPanorama(panoramaId).subscribe((hotspots: Hotspot[]) => {
+        console.log('Lista de hotspots para pintado: ', hotspots);
+        if (this.scene) {
+          hotspots.forEach(h => {
+            const mesh = this.addHotspot(this.scene!, h.theta, h.phi, 5, h);
+            this.paintHotspot(mesh, h.tipoPoste || '');
+          });
+        }
+      });
+    }
+  }
+
+  toggleHorizonLevelMode(enabled: boolean) {
+    this.horizonLevelMode = enabled;
+    console.log('Modo nivelación de horizonte:', this.horizonLevelMode ? 'activado' : 'desactivado');
+
+    if (this.horizonLevelMode) {
+      this.showHorizonLine();
+      this.setupHorizonLevelControls();
+    } else {
+      this.hideHorizonLine();
+      this.removeHorizonLevelControls();
+    }
+  }
+
+  private setupHorizonLevelControls() {
+    // Controles de teclado
+    this.keyHandler = (event: KeyboardEvent) => {
+      if (!this.horizonLevelMode) return;
+
+      switch (event.code) {
+        case 'ArrowLeft':
+        case 'KeyA':
+          this.adjustHorizonLevel(-1);
+          event.preventDefault();
+          break;
+        case 'ArrowRight':
+        case 'KeyD':
+          this.adjustHorizonLevel(1);
+          event.preventDefault();
+          break;
+        case 'KeyR':
+          this.resetHorizonLevel();
+          event.preventDefault();
+          break;
+        case 'Escape':
+          this.toggleHorizonLevelMode(false);
+          event.preventDefault();
+          break;
+      }
+    };
+
+    // Control con rueda del mouse
+    this.wheelHandler = (event: WheelEvent) => {
+      if (!this.horizonLevelMode) return;
+
+      event.preventDefault();
+      const delta = event.deltaY > 0 ? 1 : -1;
+      this.adjustHorizonLevel(delta * 0.5);
+    };
+
+    document.addEventListener('keydown', this.keyHandler);
+    if (this.renderer?.domElement) {
+      this.renderer.domElement.addEventListener('wheel', this.wheelHandler, { passive: false });
+    }
+  }
+
+  private resetHorizonLevel() {
+    this.horizontalRotation = 0;
+    this.pitchRotation = 0;
+    this.yawRotation = 0;
+
+    // Resetear rotación de la esfera
+    if (this.sphereMesh) {
+      this.sphereMesh.rotation.set(0, 0, 0);
+    }
+
+    this.horizonLevelSubject.next(0);
+    console.log('🔄 Imagen panorámica reseteada a posición original');
+
+    // Forzar render
+    if (this.renderer && this.scene && this.camera) {
+      this.renderer.render(this.scene, this.camera);
+    }
+
+    // Guardar reset
+    if (this.currentPanoramaId) {
+      this.saveLevelingToService();
+    }
+  }
+
+  private applyHorizonLevelRotation() {
+    console.log('🎯 applyHorizonLevelRotation iniciado');
+
+    if (!this.sphereMesh) {
+      console.error('❌ No hay esfera disponible para nivelar la imagen en applyHorizonLevelRotation');
+      return;
+    }
+
+    // Convertir grados a radianes
+    const rollRad = THREE.MathUtils.degToRad(this.horizontalRotation);
+
+    console.log(`🎯 Nivelando imagen panorámica: ${this.horizontalRotation.toFixed(1)}° (${rollRad} rad)`);
+
+    // MOSTRAR ESTADO ANTES
+    console.log('Estado ANTES - sphereMesh.rotation:', {
+      x: THREE.MathUtils.radToDeg(this.sphereMesh.rotation.x).toFixed(2) + '°',
+      y: THREE.MathUtils.radToDeg(this.sphereMesh.rotation.y).toFixed(2) + '°',
+      z: THREE.MathUtils.radToDeg(this.sphereMesh.rotation.z).toFixed(2) + '°'
+    });
+
+    // IMPORTANTE: Rotar la ESFERA, no la cámara
+    // Esto corrige la inclinación de la foto panorámica
+    this.sphereMesh.rotation.z = rollRad;
+
+    // También podemos aplicar pitch y yaw si es necesario
+    if (this.pitchRotation !== 0) {
+      this.sphereMesh.rotation.x = THREE.MathUtils.degToRad(this.pitchRotation);
+    }
+
+    if (this.yawRotation !== 0) {
+      this.sphereMesh.rotation.y = THREE.MathUtils.degToRad(this.yawRotation);
+    }
+
+    // MOSTRAR ESTADO DESPUÉS
+    console.log('Estado DESPUÉS - sphereMesh.rotation:', {
+      x: THREE.MathUtils.radToDeg(this.sphereMesh.rotation.x).toFixed(2) + '°',
+      y: THREE.MathUtils.radToDeg(this.sphereMesh.rotation.y).toFixed(2) + '°',
+      z: THREE.MathUtils.radToDeg(this.sphereMesh.rotation.z).toFixed(2) + '°'
+    });
+
+    // Forzar re-render para mostrar el cambio inmediatamente
+    if (this.renderer && this.scene && this.camera) {
+      console.log('🔄 Forzando re-render...');
+      this.renderer.render(this.scene, this.camera);
+      console.log('✅ Re-render completado');
+    } else {
+      console.error('❌ No se puede hacer re-render, faltan componentes:', {
+        renderer: !!this.renderer,
+        scene: !!this.scene,
+        camera: !!this.camera
+      });
+    }
+
+    console.log(`✅ Imagen panorámica nivelada a ${this.horizontalRotation.toFixed(1)}°`);
+  }
+
+  testSphereRotation() {
+    console.log('🧪 INICIANDO PRUEBA DIRECTA DE ROTACIÓN DE ESFERA');
+
+    if (!this.sphereMesh) {
+      console.error('❌ No hay esfera para probar');
+      console.log('Scene:', !!this.scene, 'Camera:', !!this.camera, 'Renderer:', !!this.renderer);
+      return;
+    }
+
+    console.log('✅ Esfera encontrada, iniciando prueba automática...');
+
+    // Probar rotaciones directas
+    const testAngles = [0, 10, 20, -10, -20, 0];
+    let index = 0;
+
+    const interval = setInterval(() => {
+      if (index >= testAngles.length) {
+        clearInterval(interval);
+        console.log('✅ Prueba automática completada');
+        return;
+      }
+
+      const angle = testAngles[index];
+      console.log(`🎯 Probando ángulo: ${angle}°`);
+
+      // Llamar al método principal
+      this.setHorizonLevel(angle);
+
+      index++;
+    }, 2000); // 2 segundos entre cada prueba
+  }
+
+  private adjustHorizonLevel(degrees: number) {
+    this.horizontalRotation += degrees;
+
+    // Limitar la rotación entre -45 y 45 grados
+    this.horizontalRotation = Math.max(-45, Math.min(45, this.horizontalRotation));
+
+    // Aplicar la corrección
+    this.applyHorizonLevelRotation();
+    this.horizonLevelSubject.next(this.horizontalRotation);
+
+    console.log(`🎯 Imagen ajustada: ${this.horizontalRotation.toFixed(1)}°`);
+
+    // Auto-guardar
+    if (this.currentPanoramaId) {
+      this.saveLevelingToService();
+    }
+  }
+
+  setAllLevels(roll: number, pitch: number = 0, yaw: number = 0) {
+    this.horizontalRotation = Math.max(-45, Math.min(45, roll));
+    this.pitchRotation = Math.max(-30, Math.min(30, pitch));
+    this.yawRotation = Math.max(-180, Math.min(180, yaw));
+
+    console.log(`🎚️ Aplicando corrección completa - Roll: ${roll}°, Pitch: ${pitch}°, Yaw: ${yaw}°`);
+
+    // Aplicar todas las correcciones
+    this.applyHorizonLevelRotation();
+
+    // Emitir cambios
+    this.horizonLevelSubject.next(this.horizontalRotation);
+  }
+
+  getCurrentHorizonLevel(): number {
+    return this.horizontalRotation;
+  }
+
+  getCurrentLevels(): { roll: number, pitch: number, yaw: number } {
+    return {
+      roll: this.horizontalRotation,
+      pitch: this.pitchRotation,
+      yaw: this.yawRotation
+    };
+  }
+
+  private async loadAndApplyLeveling(panoramaId: number): Promise<void> {
+    try {
+      const levelData = await this.levelerService.loadLevelData(panoramaId);
+      if (levelData) {
+        console.log(`📁 Cargando nivelación guardada para panorama ${panoramaId}:`, {
+          roll: levelData.rollAngle,
+          pitch: levelData.pitchAngle,
+          yaw: levelData.yawAngle
+        });
+
+        // Aplicar la nivelación guardada
+        this.setAllLevels(
+          levelData.rollAngle,
+          levelData.pitchAngle,
+          levelData.yawAngle
+        );
+
+        console.log(`✅ Nivelación aplicada automáticamente`);
+      } else {
+        console.log(`📁 No hay nivelación guardada para panorama ${panoramaId}`);
+        // Resetear a posición original si no hay datos guardados
+        this.setAllLevels(0, 0, 0);
+      }
+    } catch (error) {
+      console.warn('Error cargando nivelación guardada:', error);
+      // En caso de error, resetear a posición original
+      this.setAllLevels(0, 0, 0);
+    }
+  }
+
+
+  private async saveLevelingToService(): Promise<void> {
+    if (!this.currentPanoramaId) return;
+
+    try {
+      await this.levelerService.saveLevelData({
+        panoramaId: this.currentPanoramaId,
+        rollAngle: this.horizontalRotation,
+        pitchAngle: this.pitchRotation,
+        yawAngle: this.yawRotation
+      });
+
+      console.log(`💾 Nivelación guardada para panorama ${this.currentPanoramaId}`);
+    } catch (error) {
+      console.warn('Error guardando nivelación:', error);
+    }
+  }
+
+
+
+  async applyLevelingFromData(panoramaId: number): Promise<boolean> {
+    try {
+      const levelData = await this.levelerService.loadLevelData(panoramaId);
+      if (levelData) {
+        this.setAllLevels(
+          levelData.rollAngle,
+          levelData.pitchAngle,
+          levelData.yawAngle
+        );
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error aplicando nivelación desde datos:', error);
+      return false;
+    }
+  }
+
+  private removeHorizonLevelControls() {
+    if (this.keyHandler) {
+      document.removeEventListener('keydown', this.keyHandler);
+      this.keyHandler = undefined;
+    }
+
+    if (this.wheelHandler && this.renderer?.domElement) {
+      this.renderer.domElement.removeEventListener('wheel', this.wheelHandler);
+      this.wheelHandler = undefined;
+    }
+  }
+
+  private hideHorizonLine() {
+    if (this.horizonLine && this.scene) {
+      this.scene.remove(this.horizonLine);
+      this.horizonLine.geometry.dispose();
+      (this.horizonLine.material as THREE.LineBasicMaterial).dispose();
+      this.horizonLine = null;
+    }
+  }
+
+  private showHorizonLine() {
+    if (!this.scene || this.horizonLine) return;
+
+    const points = [];
+    for (let i = 0; i <= 360; i += 5) {
+      const angle = (i * Math.PI) / 180;
+      const radius = 4.8; // Ligeramente menor que la esfera
+      points.push(new THREE.Vector3(
+        radius * Math.cos(angle),
+        0, // Línea horizontal
+        radius * Math.sin(angle)
+      ));
+    }
+
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const material = new THREE.LineBasicMaterial({
+      color: 0x4CAF50,
+      linewidth: 3,
+      transparent: true,
+      opacity: 0.8
+    });
+
+    this.horizonLine = new THREE.Line(geometry, material);
+    this.horizonLine.renderOrder = 1000; // Renderizar por encima
+    this.scene.add(this.horizonLine);
+  }
+
+  setHorizonLevel(degrees: number) {
+    console.log('🎯 setHorizonLevel llamado con degrees:', degrees);
+
+    const newRotation = Math.max(-45, Math.min(45, degrees));
+    console.log('🎯 newRotation calculado:', newRotation);
+
+    // Solo aplicar si realmente cambió
+    if (Math.abs(this.horizontalRotation - newRotation) < 0.01) {
+      console.log('⚠️ Cambio muy pequeño, omitiendo. Current:', this.horizontalRotation, 'New:', newRotation);
+      return;
+    }
+
+    this.horizontalRotation = newRotation;
+    console.log('✅ horizontalRotation actualizado a:', this.horizontalRotation);
+    console.log(`🎚️ Aplicando corrección de nivelación: ${this.horizontalRotation.toFixed(1)}°`);
+
+    // VERIFICAR QUE LA ESFERA EXISTE ANTES DE APLICAR
+    if (!this.sphereMesh) {
+      console.error('❌ sphereMesh NO EXISTE!');
+      console.log('Scene existe:', !!this.scene);
+      console.log('Camera existe:', !!this.camera);
+      console.log('Renderer existe:', !!this.renderer);
+      return;
+    }
+
+    console.log('✅ sphereMesh encontrado, aplicando rotación...');
+
+    // Aplicar la corrección a la imagen
+    this.applyHorizonLevelRotation();
+
+    // Emitir el cambio para actualizar la UI
+    this.horizonLevelSubject.next(this.horizontalRotation);
+
+    // Auto-guardar si hay un panorama actual
+    if (this.currentPanoramaId) {
+      console.log('💾 Auto-guardando para panorama:', this.currentPanoramaId);
+      this.saveLevelingToService();
+    } else {
+      console.log('⚠️ No hay currentPanoramaId para auto-guardar');
+    }
   }
 
   registerTooltipCallback(cb: (x: number, y: number, label: string) => void) {
@@ -526,43 +1211,7 @@ export class VrThreeService implements OnDestroy {
     quaternion.multiply(q0.setFromAxisAngle(zee, -orient));
   }
 
-  private startAnimation() {
-    if (!this.scene || !this.camera) {
-      console.error('No hay escena o cámara disponible para iniciar la animación');
-      return;
-    }
 
-    const animate = () => {
-      this.animationId = requestAnimationFrame(animate);
-      if (this.orbitControlMode && this.controls) {
-        this.controls.update();
-      }
-      if (this.renderer && this.scene && this.camera) {
-        this.renderer.render(this.scene, this.camera);
-      }
-    };
-
-    animate();
-    console.log('Animación iniciada');
-    const panoramaId = this.panoramaSyncService.getCurrentPanoramaIdSync();
-
-    if (panoramaId === null) {
-      console.warn('[VR Component] No hay panoramaId actual, no se pueden cargar hotspots');
-      return;
-    }
-
-    this.apiService.getPostesByPanorama(panoramaId).subscribe((hotspots: Hotspot[]) => {
-      console.log('Lista de hotspots para pintado: ', hotspots);
-      if (this.scene) {
-        hotspots.forEach(h => {
-          console.log('Tipo de hotspot recibido:', h.tipoPoste);  // <--- Esto
-          const mesh = this.addHotspot(this.scene!, h.theta, h.phi, 5, h);
-          this.paintHotspot(mesh, h.tipoPoste || '');
-        });
-      }
-    })  ;
-
-  }
   paintHotspot(hotspot: THREE.Mesh, type: string): void {
     let color: number;
     switch (type.toLowerCase()) {
@@ -739,13 +1388,11 @@ export class VrThreeService implements OnDestroy {
   }
 
   public cleanup() {
+    this.cleanupLevelingButtons(); // NUEVO
     this.cleanupWithoutColorMaps();
-
-    // Limpiar también los mapas de colores
     this.hotspotColors.clear();
     this.hotspotTypes.clear();
-
-    console.log('Recursos limpiados completamente (incluyendo mapas de colores)');
+    console.log('Recursos limpiados completamente (incluyendo botones de nivelación)');
   }
 
   // MÉTODO ACTUALIZADO: Crear hotspot key único
@@ -807,9 +1454,6 @@ export class VrThreeService implements OnDestroy {
     return (hotspot.material as THREE.MeshBasicMaterial).color.set(0xffff00);
   }
 
-
-
-
   //Doble click al hotspot
   private onHotspotClick(hotspot: THREE.Mesh) {
     const label = (hotspot.userData as { label: string }).label;
@@ -868,7 +1512,7 @@ export class VrThreeService implements OnDestroy {
     }
   }
 
-  updatePanoramaTexture(imageUrl: string, panoramaId?: number): void {
+  async updatePanoramaTexture(imageUrl: string, panoramaId?: number): Promise<void> {
     console.log('[VrThreeService] Actualizando textura del panorama:', imageUrl);
 
     if (!this.scene || !this.sphereMesh) {
@@ -880,39 +1524,61 @@ export class VrThreeService implements OnDestroy {
     const textureLoader = new THREE.TextureLoader();
     this.showLoader();
 
-    textureLoader.load(
-      imageUrl,
-      (texture) => {
-        console.log('[VrThreeService] Nueva textura cargada exitosamente');
-        if (this.sphereMesh && this.sphereMesh.material) {
-          const material = Array.isArray(this.sphereMesh.material)
-            ? this.sphereMesh.material[0]
-            : this.sphereMesh.material;
-          if ((material as THREE.MeshBasicMaterial).map) {
-            (material as THREE.MeshBasicMaterial).map!.dispose();
+    return new Promise((resolve, reject) => {
+      textureLoader.load(
+        imageUrl,
+        async (texture) => {
+          console.log('[VrThreeService] Nueva textura cargada exitosamente');
+
+          if (this.sphereMesh && this.sphereMesh.material) {
+            const material = Array.isArray(this.sphereMesh.material)
+              ? this.sphereMesh.material[0]
+              : this.sphereMesh.material;
+
+            // Limpiar textura anterior
+            if ((material as THREE.MeshBasicMaterial).map) {
+              (material as THREE.MeshBasicMaterial).map!.dispose();
+            }
+
+            // Aplicar nueva textura
+            (material as THREE.MeshBasicMaterial).map = texture;
+            material.needsUpdate = true;
           }
-          (material as THREE.MeshBasicMaterial).map = texture;
-          material.needsUpdate = true;
-        }
-        this.hideLoader();
 
-        // NUEVA PARTE: Cargar hotspots específicos si se proporciona panoramaId
-        if (panoramaId !== undefined) {
-          this.loadHotspotsForPanorama(panoramaId);
-        }
+          this.hideLoader();
 
-        if (this.renderer && this.scene && this.camera) {
-          this.renderer.render(this.scene, this.camera);
+          // IMPORTANTE: Cargar y aplicar nivelación automáticamente
+          if (panoramaId !== undefined) {
+            this.currentPanoramaId = panoramaId;
+
+            // Primero resetear la rotación de la esfera
+            this.sphereMesh!.rotation.set(0, 0, 0);
+
+            // Luego cargar y aplicar la nivelación guardada
+            await this.loadAndApplyLeveling(panoramaId);
+
+            // Cargar hotspots después de aplicar nivelación
+            this.loadHotspotsForPanorama(panoramaId);
+          }
+
+          // Render final
+          if (this.renderer && this.scene && this.camera) {
+            this.renderer.render(this.scene, this.camera);
+          }
+
+          console.log('[VrThreeService] Panorama cargado con nivelación aplicada');
+          resolve();
+        },
+        (progress) => {
+          console.log('[VrThreeService] Progreso de carga:', progress);
+        },
+        (error) => {
+          console.error('[VrThreeService] Error al cargar nueva textura:', error);
+          this.hideLoader();
+          reject(error);
         }
-      },
-      (progress) => {
-        console.log('[VrThreeService] Progreso de carga:', progress);
-      },
-      (error) => {
-        console.error('[VrThreeService] Error al cargar nueva textura:', error);
-        this.hideLoader();
-      }
-    );
+      );
+    });
   }
 
   public getCurrentPanoramaId(): number | null {

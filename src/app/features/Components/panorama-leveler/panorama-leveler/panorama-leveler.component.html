@@ -1,0 +1,160 @@
+<div class="panorama-leveler" [class.active]="isActive">
+  <!-- Botón de activación -->
+  <button
+    class="leveler-toggle"
+    [class.active]="isActive"
+    (click)="toggleLeveler()"
+    title="Corregir inclinación de imagen (N)">
+    <i class="fas fa-balance-scale"></i>
+    <span>{{ isActive ? 'Cerrar' : 'Nivelar Imagen' }}</span>
+  </button>
+
+  <!-- PANEL PRINCIPAL DEL NIVELADOR (ESTO ES LO QUE FALTABA) -->
+  <div class="leveler-panel" *ngIf="isActive">
+
+    <!-- Información del panorama -->
+    <div class="panorama-info">
+      <span class="panorama-id">
+        <i class="fas fa-image"></i>
+        Panorama: {{ currentPanoramaId || 'N/A' }}
+      </span>
+      <span class="save-status" [class]="saveStatus.class">
+        <i [class]="saveStatus.icon"></i>
+        {{ saveStatus.text }}
+      </span>
+    </div>
+
+    <!-- Explicación -->
+    <div class="leveler-explanation">
+      <i class="fas fa-info-circle"></i>
+      <span>Corrige la inclinación de la imagen panorámica</span>
+    </div>
+
+    <!-- Control principal de nivelación -->
+    <div class="level-control main-level">
+      <label class="level-label">
+        <i class="fas fa-level"></i>
+        Corrección de Inclinación
+      </label>
+
+      <!-- Mostrar el ángulo actual -->
+      <div class="level-display">
+        <span class="angle-value" [class.warning]="Math.abs(currentRoll) > 10">
+          {{ currentRoll.toFixed(1) }}°
+        </span>
+        <span class="angle-description">
+          {{ getAngleDescription(currentRoll) }}
+        </span>
+      </div>
+
+      <!-- SLIDER PRINCIPAL - EL CONTROL PRINCIPAL -->
+      <div class="slider-container">
+        <input
+          type="range"
+          class="level-slider main-slider"
+          min="-45"
+          max="45"
+          step="0.1"
+          [value]="currentRoll"
+          (input)="onRollChange($event)"
+          (change)="onRollChangeComplete()"
+          title="Arrastra para corregir la inclinación">
+
+        <div class="slider-marks">
+          <span class="mark">-45°</span>
+          <span class="mark center">0°</span>
+          <span class="mark">+45°</span>
+        </div>
+      </div>
+
+      <!-- Botones de ajuste fino -->
+      <div class="fine-controls">
+        <button
+          class="fine-btn"
+          (click)="adjustRoll(-5)"
+          title="Inclinar 5° izquierda">
+          -5°
+        </button>
+
+        <button
+          class="fine-btn"
+          (click)="adjustRoll(-1)"
+          title="Inclinar 1° izquierda">
+          -1°
+        </button>
+
+        <button
+          class="fine-btn"
+          (click)="adjustRoll(-0.1)"
+          title="Ajuste fino izquierda">
+          -0.1°
+        </button>
+
+        <button
+          class="reset-btn"
+          (click)="resetLevel()"
+          title="Resetear a 0°">
+          Reset
+        </button>
+
+        <button
+          class="fine-btn"
+          (click)="adjustRoll(0.1)"
+          title="Ajuste fino derecha">
+          +0.1°
+        </button>
+
+        <button
+          class="fine-btn"
+          (click)="adjustRoll(1)"
+          title="Inclinar 1° derecha">
+          +1°
+        </button>
+
+        <button
+          class="fine-btn"
+          (click)="adjustRoll(5)"
+          title="Inclinar 5° derecha">
+          +5°
+        </button>
+      </div>
+    </div>
+
+    <!-- Acciones principales -->
+    <div class="leveler-actions">
+      <button
+        class="action-btn save-btn"
+        (click)="saveCurrentLevel()"
+        [disabled]="!hasChanges"
+        title="Guardar corrección">
+        <i class="fas fa-save"></i>
+        Guardar
+      </button>
+
+      <button
+        class="action-btn reset-all-btn"
+        (click)="resetAllCorrections()"
+        title="Resetear todo">
+        <i class="fas fa-undo-alt"></i>
+        Reset Todo
+      </button>
+
+
+    </div>
+
+    <!-- Instrucciones básicas -->
+    <div class="usage-instructions">
+      <div class="instructions-title">
+        <i class="fas fa-question-circle"></i>
+        Instrucciones
+      </div>
+      <ul class="instructions-list">
+        <li><strong>Arrastra el slider</strong> para corregir la inclinación</li>
+        <li>Usa los <strong>botones ±</strong> para ajustes precisos</li>
+        <li>Presiona <strong>"Guardar"</strong> para mantener los cambios</li>
+        <li>Presiona <strong>"Probar"</strong> para test automático</li>
+      </ul>
+    </div>
+
+  </div>
+</div>

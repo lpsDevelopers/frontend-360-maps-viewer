@@ -51,6 +51,7 @@ import {ImageUploaderComponent} from "./features-admin/Component-utils/image-upl
 import {AdminUploaderComponent} from "./features-admin/Pages/admin-uploader/admin-uploader.component";
 import {ModalPanel3Component} from "./features-admin/Component-utils/modal-panel-3/modal-panel-3.component";
 import { CsvLocationsComponent } from './features/Components/csv-locations/csv-locations.component';
+import { PanoramaLevelerComponent } from './features/Components/panorama-leveler/panorama-leveler/panorama-leveler.component';
 
 
 
@@ -99,7 +100,8 @@ import { CsvLocationsComponent } from './features/Components/csv-locations/csv-l
     ImageUploaderComponent,
     AdminUploaderComponent,
     ModalPanel3Component,
-    CsvLocationsComponent
+    CsvLocationsComponent,
+    PanoramaLevelerComponent
   ],
   imports: [
     BrowserModule,
