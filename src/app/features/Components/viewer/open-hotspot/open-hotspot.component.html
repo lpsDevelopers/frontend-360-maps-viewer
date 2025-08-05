@@ -1,133 +1,191 @@
 <!-- Contenedor con animación slideIn -->
-<script src="../../../../app.module.ts"></script>
 <div
   class="slide-bar"
   *ngIf="visible"
   [@slideIn]="'in'"
   (@slideIn.done)="!visible && closeBar()"
 >
+
   <div class="bar-header">
     <div class="header-content">
-      <div class="header-icon">
+      <div class="header-icon" [class.saved]="!uploading && isFormValid()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
         </svg>
       </div>
-      <h2>Editar Poste</h2>
+      <div class="header-text">
+        <h2>Editar Poste</h2>
+        <div class="header-status"
+             [class.saved]="!uploading && isFormValid()"
+             [class.readonly]="uploading">
+          {{ uploading ? 'Subiendo archivos...' : (isFormValid() ? 'Formulario completo' : 'Campos requeridos') }}
+        </div>
+      </div>
     </div>
-    <button type="button" class="close-btn" (click)="closeBar()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
+    <div class="header-actions">
+      <button type="button" class="refresh-btn" (click)="generateImagePreviews()" title="Actualizar previsualizaciones">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+        </svg>
+      </button>
+      <button type="button" class="close-btn" (click)="closeBar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Indicador de progreso global -->
+  <div class="upload-status-bar" *ngIf="uploading">
+    <div class="status-content">
+      <div class="loading-spinner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12a9 9 0 11-6.219-8.56"/>
+        </svg>
+      </div>
+      <div class="status-text">
+        <strong>Subiendo archivos a S3...</strong>
+        <small>Por favor espera mientras se procesan los archivos</small>
+      </div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" [style.width]="selectedFiles.length > 0 ? '100%' : '0%'"></div>
+    </div>
   </div>
 
   <form (ngSubmit)="saveHotspot()" #hotspotForm="ngForm" class="modern-form">
 
-    <!-- Información Principal -->
     <div class="form-section">
       <h3 class="section-title">
-        <span class="section-icon">📍</span>
+        <i class="section-icon fas fa-map-marker-alt"></i>
         Información Principal
       </h3>
 
-      <!-- Codigo Poste Antiguo -->
-      <div class="form-group">
-        <label for="codigoPosteAntiguo">Código Poste Antiguo</label>
-        <div class="input-wrapper">
-          <input
-            id="codigoPosteAntiguo"
-            name="codigoPosteAntiguo"
-            type="text"
-            [(ngModel)]="modalData.codigoPosteAntiguo"
-            placeholder="Ingresa el código del poste antiguo"
-            required
-          />
-          <span class="input-border"></span>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="codigoPosteAntiguo">
+            Código Poste Antiguo
+            <span class="required-indicator">*</span>
+          </label>
+          <div class="input-wrapper" [class.has-value]="modalData.codigoPosteAntiguo">
+            <input
+              id="codigoPosteAntiguo"
+              name="codigoPosteAntiguo"
+              type="text"
+              [(ngModel)]="modalData.codigoPosteAntiguo"
+              placeholder="Ej: PST-001-2024"
+              required
+              autocomplete="off"
+            />
+            <span class="input-border"></span>
+            <div class="field-icon" *ngIf="modalData.codigoPosteAntiguo">
+              <i class="fas fa-check"></i>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <!-- Tipo Poste -->
-      <div class="form-group">
-        <label for="tipoPoste">Tipo de Poste</label>
-        <div class="select-wrapper">
-          <select
-            id="tipoPoste"
-            name="tipoPoste"
-            [(ngModel)]="modalData.tipoPoste"
-            required
-          >
-            <option value="">Seleccionar tipo</option>
-            <option value="Tipo1">Tipo 1</option>
-            <option value="Tipo2">Tipo 2</option>
-            <option value="Tipo3">Tipo 3</option>
-          </select>
-          <span class="select-arrow">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6,9 12,15 18,9"></polyline>
-            </svg>
-          </span>
+        <!-- Tipo Poste -->
+        <div class="form-group">
+          <label for="tipoPoste">
+            Tipo de Poste
+            <span class="required-indicator">*</span>
+          </label>
+          <div class="select-wrapper" [class.has-value]="modalData.tipoPoste">
+            <select
+              id="tipoPoste"
+              name="tipoPoste"
+              [(ngModel)]="modalData.tipoPoste"
+              required
+            >
+              <option value="">Seleccionar tipo</option>
+              <option value="hostpot">🟡 Hostpot</option>
+              <option value="equipamiento">🟢 Equipamiento</option>
+              <option value="saturado">🔴 Saturado</option>
+              <option value="inclinado">⚫ Inclinado</option>
+            </select>
+            <span class="select-arrow">
+              <i class="fas fa-chevron-down"></i>
+            </span>
+          </div>
         </div>
-      </div>
 
-      <!-- Nombre Vía -->
-      <div class="form-group">
-        <label for="nombreVia">Nombre de la Vía</label>
-        <div class="input-wrapper">
-          <input
-            id="nombreVia"
-            name="nombreVia"
-            type="text"
-            [(ngModel)]="modalData.nombreVia"
-            placeholder="Ingresa el nombre de la vía"
-          />
-          <span class="input-border"></span>
+        <!-- Nombre Vía -->
+        <div class="form-group full-width">
+          <label for="nombreVia">Nombre de la Vía</label>
+          <div class="input-wrapper" [class.has-value]="modalData.nombreVia">
+            <input
+              id="nombreVia"
+              name="nombreVia"
+              type="text"
+              [(ngModel)]="modalData.nombreVia"
+              placeholder="Ej: Av. Principal, Jr. Los Olivos"
+            />
+            <span class="input-border"></span>
+            <div class="field-icon" *ngIf="modalData.nombreVia">
+              <i class="fas fa-road"></i>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Detalles del Trabajo -->
+    <!-- 🔧 Detalles del Trabajo -->
     <div class="form-section">
       <h3 class="section-title">
-        <span class="section-icon">🔧</span>
+        <i class="section-icon fas fa-tools"></i>
         Detalles del Trabajo
       </h3>
 
       <!-- Trabajo a Realizar -->
       <div class="form-group">
-        <label for="trabajoARealizar">Trabajo a Realizar</label>
-        <div class="textarea-wrapper">
+        <label for="trabajoARealizar">
+          Trabajo a Realizar
+          <span class="char-count" *ngIf="modalData.trabajoARealizar">
+            {{ modalData.trabajoARealizar.length }}/500
+          </span>
+        </label>
+        <div class="textarea-wrapper" [class.has-value]="modalData.trabajoARealizar">
           <textarea
             id="trabajoARealizar"
             name="trabajoARealizar"
-            rows="3"
+            rows="4"
             [(ngModel)]="modalData.trabajoARealizar"
-            placeholder="Describe detalladamente el trabajo a realizar..."
+            placeholder="Describe detalladamente el trabajo a realizar, materiales necesarios, tiempo estimado..."
+            maxlength="500"
           ></textarea>
           <span class="textarea-border"></span>
         </div>
       </div>
 
-      <!-- Observación 1 -->
+      <!-- Observaciones -->
       <div class="form-group">
-        <label for="observacion1">Observaciones</label>
-        <div class="textarea-wrapper">
+        <label for="observacion1">
+          Observaciones Adicionales
+          <span class="char-count" *ngIf="modalData.observacion1">
+            {{ modalData.observacion1.length }}/300
+          </span>
+        </label>
+        <div class="textarea-wrapper" [class.has-value]="modalData.observacion1">
           <textarea
             id="observacion1"
             name="observacion1"
             rows="3"
             [(ngModel)]="modalData.observacion1"
-            placeholder="Agrega observaciones adicionales..."
+            placeholder="Agrega observaciones importantes, condiciones especiales, riesgos identificados..."
+            maxlength="300"
           ></textarea>
           <span class="textarea-border"></span>
         </div>
       </div>
 
-      <!-- Condición -->
+      <!-- Estado de Condición -->
       <div class="form-group">
-        <label for="condicion">Estado de Condición</label>
-        <div class="radio-group">
+        <label>Estado de Condición</label>
+        <div class="radio-group modern-radio">
           <div class="radio-option">
             <input
               type="radio"
@@ -138,7 +196,10 @@
             />
             <label for="condicionActivo" class="radio-label">
               <span class="radio-indicator"></span>
-              <span class="radio-text">Activo</span>
+              <span class="radio-content">
+                <span class="radio-text">Activo</span>
+                <small class="radio-desc">Poste en funcionamiento normal</small>
+              </span>
             </label>
           </div>
           <div class="radio-option">
@@ -151,24 +212,32 @@
             />
             <label for="condicionInactivo" class="radio-label">
               <span class="radio-indicator"></span>
-              <span class="radio-text">Inactivo</span>
+              <span class="radio-content">
+                <span class="radio-text">Inactivo</span>
+                <small class="radio-desc">Poste fuera de servicio</small>
+              </span>
             </label>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Sección de Archivos -->
+    <!-- 📁 Gestión de Archivos -->
     <div class="form-section file-section">
       <h3 class="section-title">
-        <span class="section-icon">📁</span>
+        <i class="section-icon fas fa-cloud-upload-alt"></i>
         Gestión de Archivos
+        <div class="section-badge" *ngIf="selectedFiles.length > 0">
+          {{ selectedFiles.length }}/3 archivos
+        </div>
       </h3>
 
-      <!-- Selector de archivos múltiples -->
+      <!-- Área de carga de archivos -->
       <div class="form-group">
-        <label for="fileUpload">Seleccionar Archivos</label>
-        <div class="file-upload-area">
+        <label>Seleccionar Archivos (Subida Automática a S3)</label>
+        <div class="file-upload-area"
+             [class.uploading]="uploading"
+             [class.has-files]="selectedFiles.length > 0">
           <input
             id="fileUpload"
             type="file"
@@ -176,225 +245,330 @@
             accept="image/*,.pdf,.doc,.docx"
             (change)="onFileSelect($event)"
             class="file-input"
+            [disabled]="uploading || selectedFiles.length >= 3"
           />
           <div class="file-upload-content">
             <div class="upload-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7,10 12,15 17,10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
+              <div class="spinner" *ngIf="uploading"></div>
+              <i class="fas fa-cloud-upload-alt" *ngIf="!uploading && selectedFiles.length === 0"></i>
+              <i class="fas fa-check-circle" *ngIf="!uploading && selectedFiles.length > 0"></i>
             </div>
-            <p class="upload-text">Arrastra archivos aquí o haz clic para seleccionar</p>
-            <p class="upload-hint">Imágenes, PDF, documentos (máx. 10MB)</p>
+            <div class="upload-text">
+              <strong *ngIf="!uploading && selectedFiles.length === 0">
+                Arrastra archivos aquí o haz clic para seleccionar
+              </strong>
+              <strong *ngIf="uploading">
+                Subiendo archivos automáticamente...
+              </strong>
+              <strong *ngIf="!uploading && selectedFiles.length > 0">
+                {{ selectedFiles.length }} archivo{{ selectedFiles.length !== 1 ? 's' : '' }} seleccionado{{ selectedFiles.length !== 1 ? 's' : '' }}
+              </strong>
+            </div>
+            <div class="upload-hint">
+              <span>Formatos soportados: Imágenes, PDF, Word</span>
+              <span>Tamaño máximo: 10MB por archivo</span>
+              <span>Límite: 3 archivos máximo</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Vista previa de archivos seleccionados -->
+      <!-- Lista de archivos seleccionados -->
       <div class="selected-files" *ngIf="selectedFiles.length > 0">
-        <h4>Archivos seleccionados:</h4>
+        <h4>
+          <i class="fas fa-list"></i>
+          Archivos Seleccionados
+        </h4>
         <div class="file-list">
-          <div class="file-item" *ngFor="let file of selectedFiles; let i = index">
-            <div class="file-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2Z"/>
-                <polyline points="14,2 14,8 20,8"/>
-              </svg>
+          <div class="file-item"
+               *ngFor="let file of selectedFiles; let i = index"
+               [class.uploaded]="getFilePathByIndex(i)"
+               [class.uploading]="!getFilePathByIndex(i) && uploading">
+            <div class="file-preview">
+              <div class="file-icon">
+                <i class="fas fa-file-image" *ngIf="file.type.startsWith('image/')"></i>
+                <i class="fas fa-file-pdf" *ngIf="file.type === 'application/pdf'"></i>
+                <i class="fas fa-file-word" *ngIf="file.type.includes('word') || file.type.includes('document')"></i>
+                <i class="fas fa-file" *ngIf="!file.type.startsWith('image/') && !file.type.includes('pdf') && !file.type.includes('word')"></i>
+              </div>
+              <img *ngIf="uploadedImagePreviews[i] && file.type.startsWith('image/')"
+                   [src]="uploadedImagePreviews[i]"
+                   alt="Preview"
+                   class="image-preview">
             </div>
-            <div class="file-info">
-              <span class="file-name">{{ file.name }}</span>
-              <span class="file-size">{{ formatFileSize(file.size) }}</span>
-            </div>
-            <button type="button" class="remove-file-btn" (click)="removeFile(i)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
 
-      <!-- Vista previa de imágenes -->
-      <div class="image-previews" *ngIf="uploadedImagePreviews.length > 0">
-        <h4>Vista previa de imágenes:</h4>
-        <div class="preview-grid">
-          <div class="preview-item" *ngFor="let preview of uploadedImagePreviews">
-            <img [src]="preview" alt="Vista previa" />
-            <div class="preview-overlay">
-              <button type="button" class="preview-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="11" cy="11" r="8"/>
-                  <path d="M21 21l-4.35-4.35"/>
-                </svg>
+            <div class="file-info">
+              <div class="file-name" [title]="file.name">{{ file.name }}</div>
+              <div class="file-meta">
+                <span class="file-size">{{ formatFileSize(file.size) }}</span>
+                <span class="file-type">{{ file.type.split('/')[1].toUpperCase() || 'FILE' }}</span>
+              </div>
+
+              <!-- Estado de subida -->
+              <div class="upload-status">
+                <div class="status-indicator success" *ngIf="getFilePathByIndex(i)">
+                  <i class="fas fa-check-circle"></i>
+                  <span>Subido correctamente</span>
+                </div>
+                <div class="status-indicator uploading" *ngIf="!getFilePathByIndex(i) && uploading">
+                  <div class="mini-spinner"></div>
+                  <span>Subiendo a S3...</span>
+                </div>
+                <div class="status-indicator pending" *ngIf="!getFilePathByIndex(i) && !uploading">
+                  <i class="fas fa-clock"></i>
+                  <span>Pendiente de subida</span>
+                </div>
+              </div>
+
+              <!-- URL del archivo -->
+              <div class="file-url" *ngIf="getFilePathByIndex(i)">
+                <div class="url-container">
+                  <input type="text"
+                         [value]="getFilePathByIndex(i)"
+                         readonly
+                         class="url-input">
+                  <div class="url-actions">
+                    <button type="button"
+                            class="url-btn copy-btn"
+                            (click)="copyToClipboard(getFilePathByIndex(i))"
+                            title="Copiar URL">
+                      <i class="fas fa-copy"></i>
+                    </button>
+                    <button type="button"
+                            class="url-btn view-btn"
+                            (click)="viewFile(getFilePathByIndex(i))"
+                            title="Ver archivo">
+                      <i class="fas fa-external-link-alt"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="file-actions">
+              <button type="button"
+                      class="action-btn remove-btn"
+                      (click)="removeFile(i)"
+                      title="Eliminar archivo">
+                <i class="fas fa-trash"></i>
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Campos de archivo existentes -->
+      <!-- Archivos existentes -->
       <div class="existing-files" *ngIf="hasExistingFiles()">
-        <h4>Archivos existentes:</h4>
+        <h4>
+          <i class="fas fa-database"></i>
+          Archivos Almacenados en S3
+        </h4>
 
-        <div class="form-group" *ngIf="modalData.filePath1">
-          <label for="filePath1">Archivo 1</label>
-          <div class="file-display">
-            <div class="file-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2Z"/>
-                <polyline points="14,2 14,8 20,8"/>
-              </svg>
+        <div class="existing-file-item" *ngIf="modalData.filePath1">
+          <div class="file-header">
+            <i class="fas fa-file"></i>
+            <span class="file-title">Archivo 1</span>
+            <div class="file-status-badge active">Activo</div>
+          </div>
+          <div class="file-url-display">
+            <input type="text" [value]="modalData.filePath1" readonly class="url-display-input">
+            <div class="file-actions-group">
+              <button type="button"
+                      class="action-btn view-btn"
+                      (click)="viewFile(modalData.filePath1)"
+                      title="Ver archivo">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button type="button"
+                      class="action-btn copy-btn"
+                      (click)="copyToClipboard(modalData.filePath1)"
+                      title="Copiar URL">
+                <i class="fas fa-copy"></i>
+              </button>
+              <button type="button"
+                      class="action-btn remove-btn"
+                      (click)="removeExistingFile(1)"
+                      title="Eliminar">
+                <i class="fas fa-trash"></i>
+              </button>
             </div>
-            <input
-              id="filePath1"
-              name="filePath1"
-              type="text"
-              [(ngModel)]="modalData.filePath1"
-              placeholder="Ruta o nombre del archivo 1"
-              readonly
-            />
-            <button type="button" class="view-file-btn" (click)="viewFile(modalData.filePath1)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-            </button>
-            <button type="button" class="remove-existing-btn" (click)="removeExistingFile(1)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
           </div>
         </div>
 
-        <div class="form-group" *ngIf="modalData.filePath2">
-          <label for="filePath2">Archivo 2</label>
-          <div class="file-display">
-            <div class="file-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2Z"/>
-                <polyline points="14,2 14,8 20,8"/>
-              </svg>
+        <div class="existing-file-item" *ngIf="modalData.filePath2">
+          <div class="file-header">
+            <i class="fas fa-file"></i>
+            <span class="file-title">Archivo 2</span>
+            <div class="file-status-badge active">Activo</div>
+          </div>
+          <div class="file-url-display">
+            <input type="text" [value]="modalData.filePath2" readonly class="url-display-input">
+            <div class="file-actions-group">
+              <button type="button"
+                      class="action-btn view-btn"
+                      (click)="viewFile(modalData.filePath2)"
+                      title="Ver archivo">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button type="button"
+                      class="action-btn copy-btn"
+                      (click)="copyToClipboard(modalData.filePath2)"
+                      title="Copiar URL">
+                <i class="fas fa-copy"></i>
+              </button>
+              <button type="button"
+                      class="action-btn remove-btn"
+                      (click)="removeExistingFile(2)"
+                      title="Eliminar">
+                <i class="fas fa-trash"></i>
+              </button>
             </div>
-            <input
-              id="filePath2"
-              name="filePath2"
-              type="text"
-              [(ngModel)]="modalData.filePath2"
-              placeholder="Ruta o nombre del archivo 2"
-              readonly
-            />
-            <button type="button" class="view-file-btn" (click)="viewFile(modalData.filePath2)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-            </button>
-            <button type="button" class="remove-existing-btn" (click)="removeExistingFile(2)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
           </div>
         </div>
 
-        <div class="form-group" *ngIf="modalData.filePath3">
-          <label for="filePath3">Archivo 3</label>
-          <div class="file-display">
-            <div class="file-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2Z"/>
-                <polyline points="14,2 14,8 20,8"/>
-              </svg>
+        <div class="existing-file-item" *ngIf="modalData.filePath3">
+          <div class="file-header">
+            <i class="fas fa-file"></i>
+            <span class="file-title">Archivo 3</span>
+            <div class="file-status-badge active">Activo</div>
+          </div>
+          <div class="file-url-display">
+            <input type="text" [value]="modalData.filePath3" readonly class="url-display-input">
+            <div class="file-actions-group">
+              <button type="button"
+                      class="action-btn view-btn"
+                      (click)="viewFile(modalData.filePath3)"
+                      title="Ver archivo">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button type="button"
+                      class="action-btn copy-btn"
+                      (click)="copyToClipboard(modalData.filePath3)"
+                      title="Copiar URL">
+                <i class="fas fa-copy"></i>
+              </button>
+              <button type="button"
+                      class="action-btn remove-btn"
+                      (click)="removeExistingFile(3)"
+                      title="Eliminar">
+                <i class="fas fa-trash"></i>
+              </button>
             </div>
-            <input
-              id="filePath3"
-              name="filePath3"
-              type="text"
-              [(ngModel)]="modalData.filePath3"
-              placeholder="Ruta o nombre del archivo 3"
-              readonly
-            />
-            <button type="button" class="view-file-btn" (click)="viewFile(modalData.filePath3)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-            </button>
-            <button type="button" class="remove-existing-btn" (click)="removeExistingFile(3)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Vista captura -->
+    <!-- 📸 Vista Captura -->
     <div class="form-section">
       <h3 class="section-title">
-        <span class="section-icon">📸</span>
+        <i class="section-icon fas fa-camera"></i>
         Vista Captura
       </h3>
-
       <div class="form-group">
         <label for="viewCapturePath">Número de Vista Captura</label>
-        <div class="input-wrapper number-input">
+        <div class="input-wrapper number-input" [class.has-value]="modalData.viewCapturePath">
           <input
             id="viewCapturePath"
             name="viewCapturePath"
             type="number"
             [(ngModel)]="modalData.viewCapturePath"
-            placeholder="0"
+            placeholder="Ej: 1, 2, 3..."
             min="0"
+            max="999"
           />
           <span class="input-border"></span>
+          <div class="field-icon" *ngIf="modalData.viewCapturePath">
+            <i class="fas fa-camera"></i>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Información del Sistema -->
-    <div class="form-section readonly-section">
+    <!-- ⚙️ Información del Sistema -->
+    <div class="form-section system-section">
       <h3 class="section-title">
-        <span class="section-icon">⚙️</span>
+        <i class="section-icon fas fa-cogs"></i>
         Información del Sistema
       </h3>
+      <div class="form-grid system-grid">
+        <div class="form-group">
+          <label for="item">Item</label>
+          <div class="input-wrapper" [class.has-value]="modalData.item">
+            <input
+              id="item"
+              type="text"
+              [(ngModel)]="modalData.item"
+              name="item"
+              placeholder="ID del item"
+            />
+            <span class="input-border"></span>
+          </div>
+        </div>
 
-      <div class="form-grid">
         <div class="form-group">
-          <label>Item</label>
-          <input type="text" class="form-control" [(ngModel)]="modalData.item" />
+          <label for="criticidad">Nivel de Criticidad</label>
+          <div class="select-wrapper criticidad" [class.has-value]="modalData.criticidad">
+            <select id="criticidad" [(ngModel)]="modalData.criticidad" name="criticidad">
+              <option value="">Seleccionar</option>
+              <option value="Alta">🔴 Alta</option>
+              <option value="Media">🟡 Media</option>
+              <option value="Baja">🟢 Baja</option>
+            </select>
+            <span class="select-arrow">
+              <i class="fas fa-chevron-down"></i>
+            </span>
+          </div>
         </div>
-      
+
         <div class="form-group">
-          <label>Criticidad</label>
-          <select class="form-control" [(ngModel)]="modalData.criticidad">
-            <option value="Alta">Alta</option>
-            <option value="Media">Media</option>
-            <option value="Baja">Baja</option>
-          </select>
+          <label for="red">Tipo de Red</label>
+          <div class="select-wrapper" [class.has-value]="modalData.red">
+            <select id="red" [(ngModel)]="modalData.red" name="red">
+              <option value="">Seleccionar</option>
+              <option value="Eléctrica">⚡ Eléctrica</option>
+              <option value="Telecomunicaciones">📡 Telecomunicaciones</option>
+            </select>
+            <span class="select-arrow">
+              <i class="fas fa-chevron-down"></i>
+            </span>
+          </div>
         </div>
-      n 
+
         <div class="form-group">
-          <label>Red</label>
-          <select class="form-control" [(ngModel)]="modalData.red">
-            <option value="Eléctrica">Eléctrica</option>
-            <option value="Telecomunicaciones">Telecomunicaciones</option>
-          </select>
+          <label for="tipoRed">Clasificación de Red</label>
+          <div class="select-wrapper" [class.has-value]="modalData.tipoRed">
+            <select id="tipoRed" [(ngModel)]="modalData.tipoRed" name="tipoRed">
+              <option value="">Seleccionar</option>
+              <option value="Distribución">🔌 Distribución</option>
+              <option value="Transmisión">🔋 Transmisión</option>
+            </select>
+            <span class="select-arrow">
+              <i class="fas fa-chevron-down"></i>
+            </span>
+          </div>
         </div>
-      
-        <div class="form-group">
-          <label>Tipo Red</label>
-          <select class="form-control" [(ngModel)]="modalData.tipoRed">
-            <option value="Distribución">Distribución</option>
-            <option value="Transmisión">Transmisión</option>
-          </select>
+      </div>
+    </div>
+
+    <!-- Resumen de validación -->
+    <div class="validation-summary" *ngIf="!isFormValid()">
+      <div class="validation-header">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Campos requeridos pendientes</span>
+      </div>
+      <div class="validation-list">
+        <div class="validation-item error" *ngIf="!modalData.codigoPosteAntiguo?.trim()">
+          <i class="fas fa-times-circle"></i>
+          <span>El código del poste antiguo es obligatorio</span>
+        </div>
+        <div class="validation-item error" *ngIf="!modalData.tipoPoste">
+          <i class="fas fa-times-circle"></i>
+          <span>Debe seleccionar el tipo de poste</span>
+        </div>
+        <div class="validation-item error" *ngIf="selectedFiles.length === 0 && !hasExistingFiles()">
+          <i class="fas fa-times-circle"></i>
+          <span>Debe adjuntar al menos un archivo</span>
         </div>
       </div>
     </div>
@@ -405,23 +579,37 @@
         type="button"
         class="cancel-btn"
         (click)="closeBar()"
+        [disabled]="uploading"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-        Cancelar
+        <i class="fas fa-times"></i>
+        <span>Cancelar</span>
       </button>
+
       <button
         type="submit"
-        [disabled]="!isFormValid()"
+        [disabled]="!isFormValid() || uploading"
         class="save-btn"
+        [class.saving]="uploading"
+        [class.edit-mode]="!uploading"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="20,6 9,17 4,12"></polyline>
-        </svg>
-        Guardar Cambios
+        <div class="btn-content">
+          <div class="spinner" *ngIf="uploading"></div>
+          <i class="fas fa-save" *ngIf="!uploading"></i>
+          <span *ngIf="!uploading">Guardar Cambios</span>
+          <span *ngIf="uploading">Procesando...</span>
+        </div>
       </button>
     </div>
   </form>
+
+  <!-- Overlay de carga -->
+  <div class="loading-overlay" *ngIf="uploading">
+    <div class="loading-spinner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12a9 9 0 11-6.219-8.56"/>
+      </svg>
+    </div>
+    <p>Subiendo archivos a Amazon S3...</p>
+  </div>
+
 </div>

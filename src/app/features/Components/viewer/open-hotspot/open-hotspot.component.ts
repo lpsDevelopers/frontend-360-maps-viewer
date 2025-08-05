@@ -2,14 +2,37 @@ import { Component, OnInit, OnDestroy, Input, ElementRef, AfterViewInit } from '
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { Subscription } from 'rxjs';
 import { OpenHotspotService } from '../../../Services/viewer-360/openHotspot/open-hotspot.service';
-import {Hotspot, Panorama} from "../../../Model/types";
+import { Hotspot, Panorama } from "../../../Model/types";
 import * as THREE from 'three';
-import {VrThreeService} from "../../../Services/viewer-360/vrThree/vr-three.service";
-import {ApiService} from "../../../Services/viewer-360/api/api.service";
-import {PanoramaSyncService} from "../../../Services/panorama-sync/panorama-sync.service";
-import {EndpointService} from "../../../Services/endpoint/endpoint.service";
+import { VrThreeService } from "../../../Services/viewer-360/vrThree/vr-three.service";
+import { ApiService } from "../../../Services/viewer-360/api/api.service";
+import { PanoramaSyncService } from "../../../Services/panorama-sync/panorama-sync.service";
+import { EndpointService } from "../../../Services/endpoint/endpoint.service";
 import * as XLSX from 'xlsx';
-import {HighlightService} from "../../../Services/highlight/highlight.service";
+import { HighlightService } from "../../../Services/highlight/highlight.service";
+
+interface UploadFileResponse {
+  id: string;
+  fileName: string;
+  originalName: string;
+  contentType: string;
+  size: number;
+  createdAt: string;
+  updatedAt: string | null;
+  createdBy: string | null;
+  tags: string | null;
+  s3Bucket: string;
+  s3Key: string;
+}
+
+interface UploadProgress {
+  fileIndex: number;
+  fileName: string;
+  progress: number;
+  status: 'pending' | 'uploading' | 'success' | 'error';
+  url?: string;
+  error?: string;
+}
 
 @Component({
   selector: 'app-open-hotspot',
@@ -17,13 +40,19 @@ import {HighlightService} from "../../../Services/highlight/highlight.service";
   styleUrls: ['./open-hotspot.component.scss'],
   animations: [
     trigger('slideIn', [
-      state('in', style({transform: 'translateX(0)'})),
+      state('in', style({ transform: 'translateX(0)' })),
       transition('void => *', [
-        style({transform: 'translateX(100%)'}),
-        animate(300)
+        style({ transform: 'translateX(100%)' }),
+        animate('300ms cubic-bezier(0.4, 0, 0.2, 1)')
       ]),
       transition('* => void', [
-        animate(300, style({transform: 'translateX(100%)'}))
+        animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ transform: 'translateX(100%)' }))
+      ])
+    ]),
+    trigger('fadeInUp', [
+      transition('void => *', [
+        style({ opacity: 0, transform: 'translateY(20px)' }),
+        animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
       ])
     ])
   ]
@@ -31,69 +60,83 @@ import {HighlightService} from "../../../Services/highlight/highlight.service";
 export class OpenHotspotComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @Input() color: number = 0xffff00;
+
+  // Estados principales
   currentPanoramaId: number | null = null;
   longitude: number | null = null;
   latitude: number | null = null;
-  showAdvanced = false;
+  visible = false;
+  uploading = false;
+  saving = false;
+
+  // Gestión de archivos mejorada
   selectedFiles: File[] = [];
   uploadedImagePreviews: string[] = [];
-  highlightedPanoramaIds: Set<number> = new Set();
-  getHotspotByPanorama: Hotspot [] = [] ;
-  selectedImage: File | null = null;  // Solo una imagen
-  imagePreview: string | null = null; // Vista previa
-  uploading = false;
+  uploadProgress: UploadProgress[] = [];
+  maxFiles = 3;
+  maxFileSize = 10 * 1024 * 1024; // 10MB
+  allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf',
+    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+  // Estados de validación
+  validationErrors: string[] = [];
+  showValidation = false;
+
+  // Three.js
   private mesh!: THREE.Mesh;
-  visible = false;
+
+  // Observables
   private subscription: Subscription = new Subscription();
   private closeSubscription?: Subscription;
 
+  // Datos del formulario
   modalData: Hotspot = {
     id: 0,
-    item: 0, // Nuevo campo
-    codigoPosteAntiguo: '', // Reemplaza label
+    item: 0,
+    codigoPosteAntiguo: '',
     pitch: 0,
     yaw: 0,
     theta: 0,
     phi: 0,
-    tipoPoste: '', // Reemplaza typeHotspot (valor por defecto diferente)
-    criticidad: '', // Nuevo campo
-    red: '', // Nuevo campo
-    tipoRed: '', // Nuevo campo
-    alturaSoporte: 0, // Nuevo campo
-    alturaVano: 0, // Nuevo campo
-    codigoDistrito: '', // Nuevo campo
-    tipoVia: '', // Nuevo campo
-    nombreVia: '', // Reemplaza title
-    numero: '', // Nuevo campo
-    manzana: '', // Nuevo campo
-    lote: '', // Nuevo campo
-    coordenadas: '', // Nuevo campo
-    latitudS: '', // Nuevo campo
-    longitudW: '', // Nuevo campo
-    urbanizacion: '', // Nuevo campo
-    posteSiguiente: '', // Nuevo campo
-    observacion1: '', // Reemplaza description
-    observacion2: '', // Nuevo campo
-    observacion3: '', // Nuevo campo
-    condicion: 'Inactivo', // Reemplaza state (mapeado a texto)
-    trabajoARealizar: '', // R3eemplaza text
+    tipoPoste: '',
+    criticidad: 'Media',
+    red: 'Eléctrica',
+    tipoRed: 'Distribución',
+    alturaSoporte: 0,
+    alturaVano: 0,
+    codigoDistrito: '',
+    tipoVia: 'Calle',
+    nombreVia: '',
+    numero: 'S/N',
+    manzana: '',
+    lote: '',
+    coordenadas: '',
+    latitudS: '',
+    longitudW: '',
+    urbanizacion: '',
+    posteSiguiente: '',
+    observacion1: '',
+    observacion2: '',
+    observacion3: '',
+    condicion: 'Inactivo',
+    trabajoARealizar: '',
     panoramasId: 0,
-    viewCapturePath: 0, // Ahora es número
-    filePath1: '', // Reemplaza filePath
-    filePath2: '', // Nuevo campo
-    filePath3: '', // Nuevo campo
+    viewCapturePath: 0,
+    filePath1: '',
+    filePath2: '',
+    filePath3: '',
   };
 
   constructor(
     private el: ElementRef,
     private openHotspot: OpenHotspotService,
-    private vrThreeService : VrThreeService,
+    private vrThreeService: VrThreeService,
     private apiService: ApiService,
     private panoramaSyncService: PanoramaSyncService,
     private endpointService: EndpointService,
     private highlightService: HighlightService
   ) {
-    console.log('OpenHotspotComponent → constructor() ejecutado');
+    console.log('🏗️ OpenHotspotComponent → Constructor inicializado');
   }
 
   ngAfterViewInit(): void {
@@ -101,82 +144,390 @@ export class OpenHotspotComponent implements OnInit, OnDestroy, AfterViewInit {
     this.vrThreeService.paintHotspot(this.mesh, this.modalData.tipoPoste);
   }
 
-
-  private createHotspot(): void {
-    const geometry = new THREE.SphereGeometry(0.5, 16, 16);
-    const material = new THREE.MeshBasicMaterial({ color: this.color });
-    this.mesh = new THREE.Mesh(geometry, material);
-    console.log('Hotspot creado', this.mesh);
-  }
-
-
-  public updateColor(newColor: number): void {
-    if (this.mesh && this.mesh.material instanceof THREE.MeshBasicMaterial) {
-      this.mesh.material.color.set(newColor);
-    }
-  }
-
   ngOnInit() {
-    console.log('OpenHotspotComponent → ngOnInit()');
+    console.log('🚀 OpenHotspotComponent → Inicializando...');
+
+    // Suscribirse al panorama actual
     this.subscription.add(
-      this.panoramaSyncService.getCurrentPanoramaId().subscribe((id ) => {
+      this.panoramaSyncService.getCurrentPanoramaId().subscribe((id) => {
         this.currentPanoramaId = id;
-        console.log('Panorama ID actualizado:', id);
+        console.log('📍 Panorama ID actualizado:', id);
+        this.loadPanoramaCoordinates();
       })
     );
-    if (this.currentPanoramaId !== null) {
-      this.subscription.add(
-        this.apiService.getPanoramaById(this.currentPanoramaId).subscribe(response => {
-          this.latitude = response.data.latitude;
-          this.longitude = response.data.longitude;
-        })
-      )
-    }
 
-    this.subscription = this.openHotspot.openModal$.subscribe((data: Hotspot) => {
-      console.log('openModal$ → Datos recibidos:', data);
-      this.modalData = { ...data }; // Spread operator for immutability
-      this.visible = true;
-      console.log('Estado actualizado → visible =', this.visible);
-    });
+    // Suscribirse a la apertura del modal
+    this.subscription.add(
+      this.openHotspot.openModal$.subscribe((data: Hotspot) => {
+        console.log('📂 Modal abierto con datos:', data);
+        this.modalData = { ...this.getDefaultModalData(), ...data };
+        this.visible = true;
+        this.resetForm();
+        this.validateForm();
+      })
+    );
 
-    // Listen for close events if the service provides them
+    // Suscribirse al cierre del modal
     this.closeSubscription = this.openHotspot.closeModal$?.subscribe(() => {
       this.closeBar();
     });
   }
 
   ngOnDestroy() {
-    console.log('OpenHotspotComponent → ngOnDestroy()');
+    console.log('🧹 OpenHotspotComponent → Limpiando recursos...');
     this.subscription?.unsubscribe();
     this.closeSubscription?.unsubscribe();
-    console.log('Suscripciones canceladas correctamente');
+    this.cleanupImagePreviews();
   }
-  private getColorFromType(type: string): number {
-    switch (type) {
-      case 'hostpot':
-        return 0xffff00; // Amarillo
-      case 'equipamiento':
-        return 0x00ff00; // Verde
-      case 'saturado':
-        return 0xff0000; // Rojo
-      case 'inclinado':
-        return 0x000000;
-      default:
-        return 0xffffff; // Blanco por defecto
+
+  // ============================================
+  // INICIALIZACIÓN Y CONFIGURACIÓN
+  // ============================================
+
+  private createHotspot(): void {
+    const geometry = new THREE.SphereGeometry(0.5, 16, 16);
+    const material = new THREE.MeshBasicMaterial({ color: this.color });
+    this.mesh = new THREE.Mesh(geometry, material);
+    console.log('🎯 Hotspot Three.js creado:', this.mesh);
+  }
+
+  private getDefaultModalData(): Partial<Hotspot> {
+    return {
+      criticidad: 'Media',
+      red: 'Eléctrica',
+      tipoRed: 'Distribución',
+      tipoVia: 'Calle',
+      numero: 'S/N',
+      condicion: 'Inactivo',
+      viewCapturePath: 0
+    };
+  }
+
+  private loadPanoramaCoordinates(): void {
+    if (this.currentPanoramaId !== null) {
+      this.subscription.add(
+        this.apiService.getPanoramaById(this.currentPanoramaId).subscribe({
+          next: (response) => {
+            this.latitude = response.data.latitude;
+            this.longitude = response.data.longitude;
+            console.log('🌍 Coordenadas cargadas:', { latitude: this.latitude, longitude: this.longitude });
+          },
+          error: (error) => {
+            console.error('❌ Error cargando coordenadas del panorama:', error);
+          }
+        })
+      );
     }
   }
-  saveHotspot() {
-    // Validar datos requeridos
-    if (!this.modalData.codigoPosteAntiguo || !this.modalData.tipoPoste) {
-      console.error('Campos requeridos faltantes');
+
+  private resetForm(): void {
+    this.selectedFiles = [];
+    this.uploadedImagePreviews = [];
+    this.uploadProgress = [];
+    this.validationErrors = [];
+    this.showValidation = false;
+    this.uploading = false;
+    this.saving = false;
+  }
+
+  // ============================================
+  // GESTIÓN DE ARCHIVOS MEJORADA
+  // ============================================
+
+  onFileSelect(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    if (!target.files) return;
+
+    const filesArray = Array.from(target.files);
+    console.log(`📁 Archivos seleccionados: ${filesArray.length}`);
+
+    // Validar archivos
+    const validFiles = this.validateFiles(filesArray);
+    if (validFiles.length === 0) return;
+
+    // Verificar límite de archivos
+    const totalFiles = this.selectedFiles.length + validFiles.length;
+    if (totalFiles > this.maxFiles) {
+      this.showError(`Máximo ${this.maxFiles} archivos permitidos. Tienes ${this.selectedFiles.length} archivos ya seleccionados.`);
       return;
     }
 
-    // Preparar el objeto según lo espera la API
+    // Agregar archivos válidos
+    this.selectedFiles.push(...validFiles);
+    this.generateImagePreviews();
+
+    // Inicializar progreso de subida
+    this.initializeUploadProgress(validFiles);
+
+    // Subir archivos secuencialmente
+    this.uploadFilesSequentially(validFiles);
+  }
+
+  private validateFiles(files: File[]): File[] {
+    const validFiles: File[] = [];
+
+    for (const file of files) {
+      // Validar tipo
+      if (!this.allowedTypes.includes(file.type)) {
+        this.showError(`Tipo de archivo no válido: ${file.name}. Tipos permitidos: Imágenes, PDF, Word.`);
+        continue;
+      }
+
+      // Validar tamaño
+      if (file.size > this.maxFileSize) {
+        this.showError(`Archivo demasiado grande: ${file.name}. Máximo ${this.formatFileSize(this.maxFileSize)}.`);
+        continue;
+      }
+
+      validFiles.push(file);
+    }
+
+    return validFiles;
+  }
+
+  private initializeUploadProgress(files: File[]): void {
+    files.forEach((file, index) => {
+      this.uploadProgress.push({
+        fileIndex: this.selectedFiles.length - files.length + index,
+        fileName: file.name,
+        progress: 0,
+        status: 'pending'
+      });
+    });
+  }
+
+  private async uploadFilesSequentially(files: File[]): Promise<void> {
+    console.log(`🔄 Iniciando subida secuencial de ${files.length} archivos`);
+    this.uploading = true;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileIndex = this.selectedFiles.length - files.length + i;
+      const fileNumber = (fileIndex + 1) as 1 | 2 | 3;
+
+      console.log(`📤 Subiendo archivo ${fileNumber}/${this.selectedFiles.length}: ${file.name}`);
+
+      try {
+        // Actualizar estado a "subiendo"
+        this.updateUploadProgress(fileIndex, 50, 'uploading');
+
+        const fileUrl = await this.uploadFileAutomatically(file, fileNumber);
+
+        // Actualizar estado a "éxito"
+        this.updateUploadProgress(fileIndex, 100, 'success', fileUrl);
+
+        console.log(`✅ Archivo ${fileNumber} subido exitosamente: ${fileUrl}`);
+
+        // Pausa entre subidas
+        await this.delay(500);
+
+      } catch (error) {
+        console.error(`❌ Error en archivo ${fileNumber}:`, error);
+        this.updateUploadProgress(fileIndex, 0, 'error', undefined, (error as Error).message);
+      }
+    }
+
+    this.uploading = false;
+    this.validateForm();
+    console.log('🏁 Subida secuencial completada');
+  }
+
+  private async uploadFileAutomatically(file: File, fileNumber: 1 | 2 | 3): Promise<string> {
+    console.log(`🚀 Subiendo archivo ${fileNumber}: ${file.name}`);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file, file.name);
+      formData.append('tags', 'hotspot-attachment');
+      formData.append('createdBy', 'hotspot-system');
+
+      const response = await this.apiService.uploadFile(formData).toPromise() as any;
+
+      if (!response || !response.s3Bucket || !response.s3Key) {
+        throw new Error('Respuesta inválida del servidor');
+      }
+
+      const fileUrl = this.generateS3Url(response.s3Bucket, response.s3Key);
+
+      // Asignar URL al campo correspondiente
+      this.assignFileUrl(fileNumber, fileUrl);
+
+      return fileUrl;
+
+    } catch (error) {
+      const errorMessage = (error as any)?.message || 'Error desconocido al subir archivo';
+      console.error(`❌ Error subiendo ${file.name}:`, error);
+      throw new Error(errorMessage);
+    }
+  }
+
+  private assignFileUrl(fileNumber: 1 | 2 | 3, url: string): void {
+    switch (fileNumber) {
+      case 1:
+        this.modalData.filePath1 = url;
+        break;
+      case 2:
+        this.modalData.filePath2 = url;
+        break;
+      case 3:
+        this.modalData.filePath3 = url;
+        break;
+    }
+    console.log(`✅ URL asignada a filePath${fileNumber}: ${url}`);
+  }
+
+  private updateUploadProgress(fileIndex: number, progress: number, status: UploadProgress['status'], url?: string, error?: string): void {
+    const progressItem = this.uploadProgress.find(p => p.fileIndex === fileIndex);
+    if (progressItem) {
+      progressItem.progress = progress;
+      progressItem.status = status;
+      if (url) progressItem.url = url;
+      if (error) progressItem.error = error;
+    }
+  }
+
+  // ============================================
+  // GESTIÓN DE ARCHIVOS - UTILIDADES
+  // ============================================
+
+  removeFile(index: number): void {
+    if (index >= 0 && index < this.selectedFiles.length) {
+      const fileName = this.selectedFiles[index].name;
+      console.log(`🗑️ Eliminando archivo ${index + 1}: ${fileName}`);
+
+      // Eliminar archivo y progreso
+      this.selectedFiles.splice(index, 1);
+      this.uploadProgress.splice(index, 1);
+
+      // Limpiar URL correspondiente
+      this.clearFileUrl(index + 1 as 1 | 2 | 3);
+
+      // Regenerar previews
+      this.generateImagePreviews();
+      this.validateForm();
+    }
+  }
+
+  private clearFileUrl(fileNumber: 1 | 2 | 3): void {
+    switch (fileNumber) {
+      case 1:
+        this.modalData.filePath1 = '';
+        break;
+      case 2:
+        this.modalData.filePath2 = '';
+        break;
+      case 3:
+        this.modalData.filePath3 = '';
+        break;
+    }
+    console.log(`🗑️ FilePath${fileNumber} limpiado`);
+  }
+
+
+
+  removeExistingFile(fileNumber: 1 | 2 | 3): void {
+    this.clearFileUrl(fileNumber);
+    this.validateForm();
+    console.log(`🗑️ Archivo existente ${fileNumber} eliminado`);
+  }
+
+  public generateImagePreviews(): void {
+    this.cleanupImagePreviews();
+    this.uploadedImagePreviews = [];
+
+    this.selectedFiles.forEach(file => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (e.target?.result) {
+            this.uploadedImagePreviews.push(e.target.result as string);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  private cleanupImagePreviews(): void {
+    this.uploadedImagePreviews.forEach(preview => {
+      if (preview.startsWith('blob:')) {
+        URL.revokeObjectURL(preview);
+      }
+    });
+  }
+
+  // ============================================
+  // VALIDACIÓN DEL FORMULARIO
+  // ============================================
+
+  validateForm(): boolean {
+    this.validationErrors = [];
+
+    // Validar campos requeridos
+    if (!this.modalData.codigoPosteAntiguo?.trim()) {
+      this.validationErrors.push('El código del poste antiguo es obligatorio');
+    }
+
+    if (!this.modalData.tipoPoste) {
+      this.validationErrors.push('Debe seleccionar el tipo de poste');
+    }
+
+    // Validar archivos
+    const hasFiles = this.selectedFiles.length > 0 || this.hasExistingFiles();
+    if (!hasFiles) {
+      this.validationErrors.push('Debe adjuntar al menos un archivo');
+    }
+
+    // Validar archivos en proceso de subida
+    const hasUploadingFiles = this.uploadProgress.some(p => p.status === 'uploading');
+    if (hasUploadingFiles) {
+      this.validationErrors.push('Espere a que terminen de subir todos los archivos');
+    }
+
+    const isValid = this.validationErrors.length === 0;
+    this.showValidation = !isValid;
+
+    console.log('📋 Validación del formulario:', {
+      isValid,
+      errors: this.validationErrors,
+      hasRequiredFields: !!this.modalData.codigoPosteAntiguo?.trim() && !!this.modalData.tipoPoste,
+      hasFiles,
+      hasUploadingFiles
+    });
+
+    return isValid;
+  }
+
+  isFormValid(): boolean {
+    return this.validateForm();
+  }
+
+  // ============================================
+  // GUARDADO DE DATOS
+  // ============================================
+
+  saveHotspot(): void {
+    console.log('💾 Iniciando guardado del hotspot...');
+
+    if (!this.validateForm()) {
+      console.error('❌ Formulario no válido');
+      this.showValidation = true;
+      return;
+    }
+
+    if (this.uploading) {
+      this.showError('Por favor espere a que terminen de subir todos los archivos');
+      return;
+    }
+
+    this.saving = true;
+    this.savePosteData();
+  }
+
+  private savePosteData(): void {
     const posteToSave = {
       id: this.modalData.id || 0,
-      item: this.modalData.item?.toString() || '0', // Asegurar string
+      item: this.modalData.item?.toString() || '0',
       codigoPosteAntiguo: this.modalData.codigoPosteAntiguo,
       pitch: Number(this.latitude) || 0,
       yaw: Number(this.longitude) || 0,
@@ -195,7 +546,7 @@ export class OpenHotspotComponent implements OnInit, OnDestroy, AfterViewInit {
       manzana: this.modalData.manzana || '',
       lote: this.modalData.lote || '',
       coordenadas: this.modalData.coordenadas || '',
-      latitudS: this.latitude?.toString() || '', // asegurar string
+      latitudS: this.latitude?.toString() || '',
       longitudW: this.longitude?.toString() || '',
       urbanizacion: this.modalData.urbanizacion || '',
       posteSiguiente: this.modalData.posteSiguiente || '',
@@ -207,269 +558,217 @@ export class OpenHotspotComponent implements OnInit, OnDestroy, AfterViewInit {
       panoramasId: Number(this.currentPanoramaId) || 0,
       viewCapturePath: Number(this.modalData.viewCapturePath) || 0,
       filePath1: this.modalData.filePath1 || '',
-
+      filePath2: this.modalData.filePath2 || '',
+      filePath3: this.modalData.filePath3 || '',
     };
 
-      console.log('Datos a enviar:', JSON.stringify(posteToSave, null, 2));
-
+    console.log('📤 Enviando datos del poste:', posteToSave);
 
     this.apiService.postPoste(posteToSave).subscribe({
-
       next: (response) => {
-
-        this.uploadFiles();
-        console.log('Poste guardado correctamente', response);
-        this.closeBar();
-        if (this.currentPanoramaId  ) {
-          const updatePayload = {
-            id: this.currentPanoramaId,
-            hasHotspots:  1
-          };
-
-          this.apiService.updatePanoramaHasHotspot(updatePayload).subscribe({
-
-            next: () => {
-              console.log('Panorama actualizado exitosamente:', response);
-            },
-            error: err => {
-              if (err.error && err.error.errors) {
-                console.error('Errores de validación:', err.error.errors);
-              }
-            }
-          });
-        }
-        // Actualizar el color del hotspot si es necesario
-        if (this.currentPanoramaId) {
-          this.vrThreeService.paintHotspot(this.mesh, this.modalData.tipoPoste);
-        }
+        console.log('✅ Poste guardado correctamente:', response);
+        this.handleSaveSuccess();
       },
-      error: (err) => {
-        console.error('Error al guardar poste:', {
-          status: err.status,
-          error: err.error,
-          url: err.url
-        });
-
-        // Mostrar detalles de validación si es error 400
-        if (err.status === 400 && err.error.errors) {
-          const errorMessages = Object.entries(err.error.errors)
-            .map(([field, messages]) => `${field}: ${(messages as string[]).join(', ')}`);
-          console.error('Errores de validación:', errorMessages.join('\n'));
-        }
+      error: (error) => {
+        console.error('❌ Error al guardar poste:', error);
+        this.handleSaveError(error);
       }
     });
   }
 
-  getHotspotComplete(){
+  private handleSaveSuccess(): void {
+    this.saving = false;
+    this.showSuccess('Poste guardado correctamente');
 
+    // Actualizar el panorama para indicar que tiene hotspots
+    if (this.currentPanoramaId) {
+      this.updatePanoramaHotspotStatus();
+    }
+
+    // Actualizar el color del hotspot en Three.js
+    if (this.vrThreeService.selectedHotspot) {
+      this.vrThreeService.paintHotspot(this.vrThreeService.selectedHotspot, this.modalData.tipoPoste);
+    }
+
+    // Cerrar el modal después de un breve delay
+    setTimeout(() => {
+      this.closeBar();
+    }, 1500);
   }
-  changeState() {
 
+  private handleSaveError(error: any): void {
+    this.saving = false;
+
+    let errorMessage = 'Error al guardar el poste';
+
+    if (error.status === 400 && error.error?.errors) {
+      const validationErrors = Object.entries(error.error.errors)
+        .map(([field, messages]) => `${field}: ${(messages as string[]).join(', ')}`)
+        .join('\n');
+      errorMessage = `Errores de validación:\n${validationErrors}`;
+    } else if (error.error?.message) {
+      errorMessage = error.error.message;
+    }
+
+    this.showError(errorMessage);
   }
 
+  private updatePanoramaHotspotStatus(): void {
+    if (!this.currentPanoramaId) return;
 
-  closeBar() {
-    console.log('closeBar() llamado — cerrando panel');
+    const updatePayload = {
+      id: this.currentPanoramaId,
+      hasHotspots: 1
+    };
+
+    this.apiService.updatePanoramaHasHotspot(updatePayload).subscribe({
+      next: () => {
+        console.log('✅ Estado de hotspots del panorama actualizado');
+      },
+      error: (error) => {
+        console.error('❌ Error actualizando estado del panorama:', error);
+      }
+    });
+  }
+
+  // ============================================
+  // UTILIDADES Y HELPERS
+  // ============================================
+
+  closeBar(): void {
+    console.log('🚪 Cerrando panel lateral...');
 
     if (this.vrThreeService.selectedHotspot) {
       this.vrThreeService.paintHotspot(this.vrThreeService.selectedHotspot, this.modalData.tipoPoste);
-    } else {
-      console.warn('⚠️ No hay hotspot seleccionado para pintar');
     }
+
     this.visible = false;
     this.openHotspot.notifyModalClosed?.();
-    console.log('Color Seleccionado', this.modalData.tipoPoste);
+    this.resetForm();
   }
 
-  private generateImagePreviews2(): void {
-    this.uploadedImagePreviews = [];
-    this.selectedFiles.forEach(file => {
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          if (e.target?.result) {
-            this.uploadedImagePreviews.push(e.target.result as string);
-          }
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-  }
-  private generateImagePreviews(): void {
-    this.uploadedImagePreviews = [];
-
-    this.selectedFiles.forEach(file => {
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          if (e.target?.result) {
-            this.uploadedImagePreviews.push(e.target.result as string);
-          }
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-  }
-  onFileSelect(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    if (target.files) {
-      this.selectedFiles = Array.from(target.files);
-      this.generateImagePreviews();
-
-      // Actualizar las rutas de archivos en modalData
-      this.updateFilePathsFromSelection();
+  // Métodos públicos para el template
+  getFilePathByIndex(index: number): string {
+    switch (index) {
+      case 0: return this.modalData.filePath1 || '';
+      case 1: return this.modalData.filePath2 || '';
+      case 2: return this.modalData.filePath3 || '';
+      default: return '';
     }
   }
-  removeExistingFile(fileNumber: 1 | 2 | 3): void {
-    switch (fileNumber) {
-      case 1:
-        this.modalData.filePath1 = '';
-        break;
-      case 2:
-        this.modalData.filePath2 = '';
-        break;
-      case 3:
-        this.modalData.filePath3 = '';
-        break;
-    }
+
+  getUploadProgress(index: number): UploadProgress | undefined {
+    return this.uploadProgress.find(p => p.fileIndex === index);
   }
+
+  hasExistingFiles(): boolean {
+    return !!(this.modalData.filePath1 || this.modalData.filePath2 || this.modalData.filePath3);
+  }
+
   viewFile(filePath: string): void {
-    if (filePath) {
-      // Aquí implementarías la lógica para abrir/ver el archivo
-      // Por ejemplo, abrirlo en una nueva ventana o modal
-      console.log('Visualizando archivo:', filePath);
-
-      // Ejemplo: si es una URL completa
-      if (filePath.startsWith('http')) {
-        window.open(filePath, '_blank');
-      } else {
-        // Si es una ruta relativa, construir la URL completa
-        // Ajusta según tu servicio
-
-      }
+    if (filePath && filePath.startsWith('http')) {
+      console.log('👁️ Abriendo archivo:', filePath);
+      window.open(filePath, '_blank');
     }
   }
-  onFileSelect2(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    if (target.files) {
-      this.selectedFiles = Array.from(target.files);
-      this.generateImagePreviews();
-      // Actualizar la ruta del archivo en modalData si solo hay un archivo
-      if (this.selectedFiles.length === 1) {
-        this.modalData.filePath1 = this.selectedFiles[0].name;
-      }
+
+  copyToClipboard(text: string): void {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        console.log('📋 URL copiada al portapapeles:', text);
+        this.showSuccess('URL copiada al portapapeles');
+      }).catch(error => {
+        console.error('❌ Error al copiar:', error);
+        this.copyTextFallback(text);
+      });
+    } else {
+      this.copyTextFallback(text);
     }
   }
-  private uploadFiles(): void {
-    if (this.selectedFiles.length === 0) return;
 
-    const formData = new FormData();
-    formData.append('file', this.selectedFiles[0], this.selectedFiles[0].name);
-    formData.append('tags', 'string');
-    formData.append('createdBy', 'string');
-    console.log('Archivo subido correctamente', this.selectedFiles[0].type);
-
-    this.apiService.uploadFile(formData).subscribe({
-      next: (response) => {
-        console.log('Archivo subido correctamente', response);
-        console.log('Archivo subido correctamente', this.selectedFiles[0].type);
-        this.closeBar();
-      },
-      error: (err) => {
-        console.error('Error al subir archivo:', err);
-        console.log('Archivo subido correctamente', this.selectedFiles[0].type);
-      }
-    });
+  private copyTextFallback(text: string): void {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      this.showSuccess('URL copiada al portapapeles');
+    } catch (err) {
+      console.error('❌ Error en fallback copy:', err);
+      this.showError('No se pudo copiar la URL');
+    }
+    document.body.removeChild(textArea);
   }
 
-  isFormValid(): boolean {
-    return !!(this.modalData.codigoPosteAntiguo?.trim() &&
-      (this.modalData.filePath1?.trim() || this.selectedFiles.length > 0));
+  updateColor(newColor: number): void {
+    if (this.mesh && this.mesh.material instanceof THREE.MeshBasicMaterial) {
+      this.mesh.material.color.set(newColor);
+    }
   }
 
-  private saveHotspotData(hotspotData: any): void {
-    this.apiService.postHotspot(hotspotData).subscribe({
-      next: () => {
-        console.log('Hotspot guardado correctamente');
-        this.closeBar();
-      },
-      error: (err) => {
-        console.error('Error al guardar el hotspot:', err);
-      }
-    });
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  // Helper method to format date
   formatDate(dateString: string): string {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('es-ES');
   }
 
-  // Helper method to format coordinates
   formatCoordinate(coord: number): string {
     return coord ? coord.toFixed(6) : 'N/A';
   }
 
-  // Helper method to get full address
-  /*
-  getFullAddress(): string {
-    const parts = [
-      this.modalData.street_name,
-      this.modalData.street_number,
-      this.modalData.locality,
-      this.modalData.province
-    ].filter(part => part && part.trim());
-    return parts.join(', ') || 'Dirección no disponible';
-  }
-   */
-  formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 Bytes';
+  // ============================================
+  // MÉTODOS PRIVADOS DE UTILIDAD
+  // ============================================
 
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  }
-  private updateFilePathsFromSelection(): void {
-    // Limpiar rutas existentes
-    this.modalData.filePath1 = '';
-    this.modalData.filePath2 = '';
-    this.modalData.filePath3 = '';
 
-    // Asignar nuevas rutas basadas en archivos seleccionados
-    this.selectedFiles.forEach((file, index) => {
-      if (index === 0) this.modalData.filePath1 = file.name;
-      else if (index === 1) this.modalData.filePath2 = file.name;
-      else if (index === 2) this.modalData.filePath3 = file.name;
-    });
+  private generateS3Url(bucket: string, key: string): string {
+    const url = `https://${bucket}.s3.amazonaws.com/${key}`;
+    console.log('🔗 URL S3 generada:', { bucket, key, url });
+    return url;
   }
 
-    onImageSelect(event: Event): void {
-    const input = event.target as HTMLInputElement;
-
-    if (input.files && input.files.length > 0) {
-      this.selectedImage = input.files[0];
-
-      // Generar vista previa
-      const reader = new FileReader();
-      reader.onload = (e) => this.imagePreview = e.target?.result as string;
-      reader.readAsDataURL(this.selectedImage);
-
-      // Limpiar selección anterior si hay más de un archivo
-      if (input.files.length > 1) {
-        console.warn('Solo se permite una imagen. Se usará la primera seleccionada.');
-      }
-    }
-  }
-  removeFile(index: number): void {
-    this.selectedFiles.splice(index, 1);
-    this.generateImagePreviews();
-    this.updateFilePathsFromSelection();
-  }
-  hasExistingFiles(): boolean {
-    return !!(this.modalData.filePath1 || this.modalData.filePath2 || this.modalData.filePath3);
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  private showSuccess(message: string): void {
+    // Implementar notificación de éxito
+    console.log('✅ Éxito:', message);
+    // Aquí podrías integrar con un servicio de notificaciones
+  }
 
+  private showError(message: string): void {
+    // Implementar notificación de error
+    console.error('❌ Error:', message);
+    // Aquí podrías integrar con un servicio de notificaciones
+    alert(message); // Temporal - reemplazar con notificación más elegante
+  }
+
+  // ============================================
+  // MÉTODOS LEGACY (mantener compatibilidad)
+  // ============================================
+
+  onImageSelect(event: Event): void {
+    // Redirigir al nuevo método
+    this.onFileSelect(event);
+  }
+
+  getHotspotComplete(): void {
+    // Método legacy - mantener para compatibilidad
+    console.log('getHotspotComplete() called');
+  }
+
+  changeState(): void {
+    // Método legacy - mantener para compatibilidad
+    console.log('changeState() called');
+  }
 }

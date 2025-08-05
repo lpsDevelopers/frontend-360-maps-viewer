@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClientModule } from '@angular/common/http';
-import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -52,6 +51,9 @@ import {AdminUploaderComponent} from "./features-admin/Pages/admin-uploader/admi
 import {ModalPanel3Component} from "./features-admin/Component-utils/modal-panel-3/modal-panel-3.component";
 import { CsvLocationsComponent } from './features/Components/csv-locations/csv-locations.component';
 import { PanoramaLevelerComponent } from './features/Components/panorama-leveler/panorama-leveler/panorama-leveler.component';
+import {GetHotspotComponent} from "./features/Components/viewer/get-hotspot/get-hotspot.component";
+import {ViewHotspotComponent} from "./features/Components/viewer/view-hotspot/view-hotspot.component";
+import {AppRoutingModule} from "./app-routing.module";
 
 
 
@@ -101,7 +103,9 @@ import { PanoramaLevelerComponent } from './features/Components/panorama-leveler
     AdminUploaderComponent,
     ModalPanel3Component,
     CsvLocationsComponent,
-    PanoramaLevelerComponent
+    PanoramaLevelerComponent,
+    ViewHotspotComponent,
+    GetHotspotComponent
   ],
   imports: [
     BrowserModule,

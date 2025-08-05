@@ -23,14 +23,13 @@ export class AdminLoginComponent {
     private authService: AdminAuthService,
     private router: Router
   ) {
-    // Redirigir si ya está autenticado como admin
     if (this.authService.isAuthenticated() && this.authService.isAdmin()) {
       this.router.navigate(['/admin/dashboard']);
     }
   }
 
   login() {
-    if (this.isLoading) return; // Prevenir múltiples clicks
+    if (this.isLoading) return;
 
     if (!this.validateForm()) return;
 
@@ -126,8 +125,8 @@ export class AdminLoginComponent {
       const user: UserEmail = {
         id: decodedToken.sub,
         email: decodedToken.email,
-        firstName: '', // No viene en el token
-        lastName: '',  // No viene en el token
+        firstName: '',
+        lastName: '',
         userId: decodedToken.sub,
         role: decodedToken.role,
         permissions: userPermissions

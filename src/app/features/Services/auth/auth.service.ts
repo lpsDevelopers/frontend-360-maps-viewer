@@ -9,11 +9,13 @@ import { map, catchError } from 'rxjs/operators';
 
 interface DecodedToken {
   sub: string;
+  email: string;
   given_name: string;
   family_name: string;
-  role: number;
+  role: number | string;
   Permission: string[];
   exp: number;
+  company_id?: string;
 }
 
 @Injectable({
@@ -23,7 +25,6 @@ export class AuthService {
   private currentUserSubject: BehaviorSubject<UserEmailToken | null>;
   public currentUser: Observable<UserEmailToken | null>;
 
-  // Nuevo BehaviorSubject para el usuario completo
   private fullUserSubject = new BehaviorSubject<User | null>(null);
   public fullUser$ = this.fullUserSubject.asObservable();
 
@@ -36,17 +37,22 @@ export class AuthService {
     private router: Router,
     private endpointService: EndpointService
   ) {
-    const storedUser = localStorage.getItem('currentUser');
+    console.log('[AuthService] Constructor: inicializando servicio de usuarios');
 
+    const storedUser = localStorage.getItem('currentUser');
     this.currentUserSubject = new BehaviorSubject<UserEmailToken | null>(
       storedUser ? JSON.parse(storedUser) : null
     );
     this.currentUser = this.currentUserSubject.asObservable();
-    this.isAuthenticatedSubject.next(this.isAuthenticated());
+
+    // Verificar autenticación inicial
+    setTimeout(() => {
+      this.isAuthenticatedSubject.next(this.isAuthenticated());
+    }, 0);
 
     window.addEventListener('storage', (event) => {
       if (event.key === 'logout-event') {
-
+        console.log('[AuthService] Logout detectado desde otra pestaña');
         this.handleLogout();
       }
     });
@@ -64,29 +70,48 @@ export class AuthService {
     const token = this.getToken();
     const user = this.currentUserValue;
     const isValid = !!token && !!user && !this.isTokenExpired();
-    this.isAuthenticatedSubject.next(isValid);
+    console.log('[AuthService] isAuthenticated:', isValid);
     return isValid;
   }
 
+  // ✅ CORREGIDO: Login que maneja SOLO usuarios normales
   login(response: any): void {
+    console.log('[AuthService] Login de usuario normal:', response);
+
     const token = response.data;
-    const decodedToken: any = jwtDecode(token);
+    const decodedToken: DecodedToken = jwtDecode(token);
+
+    console.log('[AuthService] Token decodificado:', decodedToken);
+
+    // Verificar que sea un usuario normal (no admin)
+    const roleNum = typeof decodedToken.role === 'number' ? decodedToken.role : parseInt(decodedToken.role);
+    if (roleNum === 1 || roleNum === 2) { // Si es admin
+      console.log('[AuthService] Usuario es admin, redirigiendo a admin login');
+      this.router.navigate(['/admin/login']);
+      return;
+    }
+
     const user: UserEmailToken = {
-      email: decodedToken.email,
+      email: decodedToken.email || decodedToken.sub,
     };
+
     this.setToken(token);
     this.setCurrentUser(user);
     this.isAuthenticatedSubject.next(true);
-    // Carga el usuario completo desde la API y actualiza fullUserSubject
+
+    // Cargar usuario completo
     this.loadFullUser();
+
+    // Redirigir a dashboard de usuario
+    this.router.navigate(['/dashboard']);
   }
 
   loadFullUser(): void {
     const email = this.currentUserValue?.email;
-
+    console.log('[AuthService] loadFullUser para email:', email);
 
     if (!email) {
-
+      console.log('[AuthService] No hay email, no se puede cargar usuario completo');
       this.fullUserSubject.next(null);
       return;
     }
@@ -94,23 +119,24 @@ export class AuthService {
     this.endpointService.userLogin(email).pipe(
       map(response => response.data),
       catchError((error) => {
+        console.error('[AuthService] Error cargando usuario completo:', error);
         this.fullUserSubject.next(null);
         return of(null);
       })
     ).subscribe(user => {
+      console.log('[AuthService] Usuario completo recibido:', user);
       this.fullUserSubject.next(user);
-      console.log('loadFullUser: usuario completo recibido:', user);
     });
   }
 
   logout(): void {
-
+    console.log('[AuthService] Logout iniciado');
     localStorage.setItem('logout-event', Date.now().toString());
     this.handleLogout();
   }
 
   private handleLogout(): void {
-
+    console.log('[AuthService] Limpiando sesión');
     this.removeToken();
     this.removeCurrentUser();
     this.fullUserSubject.next(null);
@@ -118,59 +144,47 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
+  // Métodos de token y usuario (sin cambios)
   setEmail(email: string): void {
-
     localStorage.setItem(this.EMAIL_KEY, email);
   }
 
   getEmail(): string | null {
-    const email = localStorage.getItem(this.EMAIL_KEY);
-
-    return email;
+    return localStorage.getItem(this.EMAIL_KEY);
   }
 
   setToken(token: string): void {
-
     localStorage.setItem('token', token);
   }
 
   getToken(): string | null {
-    const token = localStorage.getItem('token');
-
-    return token;
+    return localStorage.getItem('token');
   }
 
   private removeToken(): void {
-
     localStorage.removeItem('token');
   }
 
   setCurrentUser(user: UserEmailToken): void {
-
     this.currentUserSubject.next(user);
     localStorage.setItem('currentUser', JSON.stringify(user));
   }
 
   private removeCurrentUser(): void {
-
     this.currentUserSubject.next(null);
     localStorage.removeItem('currentUser');
   }
 
   isTokenExpired(): boolean {
     const token = this.getToken();
-    if (!token) {
-
-      return true;
-    }
+    if (!token) return true;
 
     try {
       const decodedToken = jwtDecode<DecodedToken>(token);
       const expired = decodedToken.exp * 1000 < Date.now();
-
       return expired;
     } catch (error) {
-
+      console.error('[AuthService] Error decodificando token:', error);
       return true;
     }
   }

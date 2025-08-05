@@ -4,11 +4,8 @@
   flex-direction: row;
   width: 100%;
   min-height: 100vh;
-  background-image: url('/assets/images/fondo-login.webp');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background: #29231059;
+
+  background-color: #2e4147;
 }
 
 .login-card {
@@ -20,7 +17,7 @@
   max-width: 450px;
   margin: auto;
   padding: 2.5rem;
-  background-color: rgb(19, 19, 19);
+  background-color: #062f38;
   backdrop-filter: blur(70px);
   border-radius: 16px;
   border: 1px solid rgb(49, 47, 19);
@@ -137,9 +134,9 @@
   position: relative;
   width: 100%;
   padding: 12px;
-  background: linear-gradient(to right, rgba(56, 56, 56, 0.342), rgba(34, 34, 34, 0));
+  background: #2a444a;
   color: white;
-  border: 1px solid rgba(54, 54, 54, 0.651);
+  border: 1px solid rgba(159, 159, 159, 0.78);
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 500;
@@ -148,7 +145,7 @@
   margin-top: 1.5rem;
 
   &:hover {
-    background: linear-gradient(to left, rgba(41, 42, 43, 0.726), rgba(0, 13, 19, 0));
+    background: linear-gradient(to left, rgba(117, 117, 117, 0.44), rgba(0, 13, 19, 0));
   }
 
   &:disabled {

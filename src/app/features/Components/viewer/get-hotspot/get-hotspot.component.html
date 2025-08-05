@@ -1,0 +1,386 @@
+<!-- Contenedor principal con animación slideIn -->
+<div
+  class="hotspot-viewer"
+  *ngIf="visible"
+  [@slideIn]="'in'"
+  (@slideIn.done)="!visible && closePanel()"
+>
+  <!-- Header del panel -->
+  <div class="viewer-header">
+    <div class="header-content">
+      <div class="header-icon" [class.success]="posteResponse?.isSucces" [class.error]="!posteResponse?.isSucces">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" *ngIf="posteResponse?.isSucces"/>
+          <circle cx="12" cy="12" r="10" *ngIf="!posteResponse?.isSucces"/>
+          <line x1="15" y1="9" x2="9" y2="15" *ngIf="!posteResponse?.isSucces"/>
+          <line x1="9" y1="9" x2="15" y2="15" *ngIf="!posteResponse?.isSucces"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h2>Detalles del Poste</h2>
+        <div class="header-status"
+             [class.success]="posteResponse?.isSucces"
+             [class.error]="!posteResponse?.isSucces">
+          {{ posteResponse?.message || 'Cargando información...' }}
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="refresh-btn" (click)="refreshData()" title="Actualizar datos" [disabled]="loading">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [class.spinning]="loading">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+        </svg>
+      </button>
+      <button type="button" class="close-btn" (click)="closePanel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Indicador de carga -->
+  <div class="loading-indicator" *ngIf="loading">
+    <div class="loading-content">
+      <div class="loading-spinner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12a9 9 0 11-6.219-8.56"/>
+        </svg>
+      </div>
+      <div class="loading-text">
+        <strong>Cargando información del poste...</strong>
+        <small>Por favor espera mientras obtenemos los datos</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenido principal -->
+  <div class="viewer-content" *ngIf="!loading && posteResponse" [@fadeInUp]>
+
+    <!-- Estado de respuesta -->
+    <div class="response-status"
+         [class.success]="posteResponse.isSucces"
+         [class.error]="!posteResponse.isSucces">
+      <div class="status-icon">
+        <i class="fas fa-check-circle" *ngIf="posteResponse.isSucces"></i>
+        <i class="fas fa-exclamation-triangle" *ngIf="!posteResponse.isSucces"></i>
+      </div>
+      <div class="status-text">
+        <h3>{{ posteResponse.message }}</h3>
+        <span class="status-label">{{ posteResponse.isSucces ? 'Datos Cargados' : 'Error de Carga' }}</span>
+      </div>
+    </div>
+
+    <!-- Datos del poste -->
+    <div class="poste-data" *ngIf="posteResponse.isSucces && posteResponse.data">
+
+      <!-- Información Principal -->
+      <div class="data-section">
+        <div class="section-header">
+          <i class="fas fa-info-circle"></i>
+          <h4>Información Principal</h4>
+        </div>
+        <div class="data-grid">
+          <div class="data-item">
+            <label>ID del Poste:</label>
+            <span class="value highlight">{{ posteResponse.data.id }}</span>
+          </div>
+          <div class="data-item">
+            <label>Código Antiguo:</label>
+            <span class="value">{{ posteResponse.data.codigoPosteAntiguo }}</span>
+          </div>
+          <div class="data-item">
+            <label>Tipo de Poste:</label>
+            <span class="value badge" [ngClass]="getTipoPosteClass(posteResponse.data.tipoPoste)">
+              {{ getTipoPosteIcon(posteResponse.data.tipoPoste) }} {{ posteResponse.data.tipoPoste }}
+            </span>
+          </div>
+          <div class="data-item">
+            <label>Item:</label>
+            <span class="value technical">{{ posteResponse.data.item }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estado y Criticidad -->
+      <div class="data-section">
+        <div class="section-header">
+          <i class="fas fa-exclamation-triangle"></i>
+          <h4>Estado y Criticidad</h4>
+        </div>
+        <div class="data-grid">
+          <div class="data-item">
+            <label>Criticidad:</label>
+            <span class="value badge" [ngClass]="getCriticidadClass(posteResponse.data.criticidad)">
+              {{ posteResponse.data.criticidad }}
+            </span>
+          </div>
+          <div class="data-item">
+            <label>Condición:</label>
+            <span class="value badge" [ngClass]="getCondicionClass(posteResponse.data.condicion)">
+              {{ posteResponse.data.condicion }}
+            </span>
+          </div>
+          <div class="data-item">
+            <label>Red:</label>
+            <span class="value">{{ posteResponse.data.red }}</span>
+          </div>
+          <div class="data-item">
+            <label>Tipo de Red:</label>
+            <span class="value badge network">{{ posteResponse.data.tipoRed }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Parámetros Técnicos -->
+      <div class="data-section">
+        <div class="section-header">
+          <i class="fas fa-cogs"></i>
+          <h4>Parámetros Técnicos</h4>
+        </div>
+        <div class="data-grid">
+          <div class="data-item">
+            <label>Pitch:</label>
+            <span class="value technical">{{ posteResponse.data.pitch }}°</span>
+          </div>
+          <div class="data-item">
+            <label>Yaw:</label>
+            <span class="value technical">{{ posteResponse.data.yaw }}°</span>
+          </div>
+          <div class="data-item">
+            <label>Theta:</label>
+            <span class="value technical">{{ posteResponse.data.theta }}°</span>
+          </div>
+          <div class="data-item">
+            <label>Phi:</label>
+            <span class="value technical">{{ posteResponse.data.phi }}°</span>
+          </div>
+          <div class="data-item">
+            <label>Altura Soporte:</label>
+            <span class="value technical">{{ posteResponse.data.alturaSoporte }} m</span>
+          </div>
+          <div class="data-item">
+            <label>Altura Vano:</label>
+            <span class="value technical">{{ posteResponse.data.alturaVano }} m</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ubicación -->
+      <div class="data-section">
+        <div class="section-header">
+          <i class="fas fa-map-marker-alt"></i>
+          <h4>Ubicación</h4>
+        </div>
+        <div class="data-grid">
+          <div class="data-item full-width" *ngIf="posteResponse.data.nombreVia">
+            <label>Nombre de la Vía:</label>
+            <span class="value address">{{ posteResponse.data.nombreVia }}</span>
+          </div>
+          <div class="data-item">
+            <label>Distrito:</label>
+            <span class="value">{{ posteResponse.data.codigoDistrito }}</span>
+          </div>
+          <div class="data-item">
+            <label>Tipo Vía:</label>
+            <span class="value">{{ posteResponse.data.tipoVia }}</span>
+          </div>
+          <div class="data-item">
+            <label>Número:</label>
+            <span class="value">{{ posteResponse.data.numero }}</span>
+          </div>
+          <div class="data-item">
+            <label>Manzana:</label>
+            <span class="value">{{ posteResponse.data.manzana }}</span>
+          </div>
+          <div class="data-item">
+            <label>Lote:</label>
+            <span class="value">{{ posteResponse.data.lote }}</span>
+          </div>
+          <div class="data-item">
+            <label>Urbanización:</label>
+            <span class="value">{{ posteResponse.data.urbanizacion }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Coordenadas -->
+      <div class="data-section" *ngIf="posteResponse.data.latitudS || posteResponse.data.longitudW || posteResponse.data.coordenadas">
+        <div class="section-header">
+          <i class="fas fa-globe"></i>
+          <h4>Coordenadas</h4>
+        </div>
+        <div class="coordinates-container">
+          <div class="data-item full-width" *ngIf="posteResponse.data.coordenadas">
+            <label>Coordenadas:</label>
+            <span class="value coordinates">{{ posteResponse.data.coordenadas }}</span>
+            <button type="button" class="copy-btn" (click)="copyToClipboard(posteResponse.data.coordenadas)" title="Copiar coordenadas">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+          <div class="data-grid">
+            <div class="data-item" *ngIf="posteResponse.data.latitudS">
+              <label>Latitud S:</label>
+              <span class="value coordinates">{{ posteResponse.data.latitudS }}</span>
+            </div>
+            <div class="data-item" *ngIf="posteResponse.data.longitudW">
+              <label>Longitud W:</label>
+              <span class="value coordinates">{{ posteResponse.data.longitudW }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trabajo a Realizar -->
+      <div class="data-section" *ngIf="posteResponse.data.trabajoARealizar">
+        <div class="section-header">
+          <i class="fas fa-wrench"></i>
+          <h4>Trabajo a Realizar</h4>
+        </div>
+        <div class="trabajo-container">
+          <p class="trabajo-text">{{ posteResponse.data.trabajoARealizar }}</p>
+        </div>
+      </div>
+
+      <!-- Observaciones -->
+      <div class="data-section" *ngIf="hasObservaciones()">
+        <div class="section-header">
+          <i class="fas fa-sticky-note"></i>
+          <h4>Observaciones</h4>
+        </div>
+        <div class="observaciones-container">
+          <div class="observacion-item" *ngIf="posteResponse.data.observacion1">
+            <span class="observacion-number">1</span>
+            <p>{{ posteResponse.data.observacion1 }}</p>
+          </div>
+          <div class="observacion-item" *ngIf="posteResponse.data.observacion2">
+            <span class="observacion-number">2</span>
+            <p>{{ posteResponse.data.observacion2 }}</p>
+          </div>
+          <div class="observacion-item" *ngIf="posteResponse.data.observacion3">
+            <span class="observacion-number">3</span>
+            <p>{{ posteResponse.data.observacion3 }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Archivos Adjuntos -->
+      <div class="data-section" *ngIf="hasArchivos()">
+        <div class="section-header">
+          <i class="fas fa-cloud-download-alt"></i>
+          <h4>Archivos Adjuntos</h4>
+        </div>
+        <div class="archivos-container">
+          <div class="archivo-item" *ngIf="posteResponse.data.filePath1">
+            <div class="archivo-header">
+              <i class="fas fa-file"></i>
+              <span class="archivo-title">Archivo 1</span>
+              <div class="archivo-status-badge active">Disponible</div>
+            </div>
+            <div class="archivo-url">
+              <input type="text" [value]="posteResponse.data.filePath1" readonly class="url-input">
+              <div class="archivo-actions">
+                <button type="button" class="action-btn view-btn" (click)="viewFile(posteResponse.data.filePath1)" title="Ver archivo">
+                  <i class="fas fa-external-link-alt"></i>
+                </button>
+                <button type="button" class="action-btn copy-btn" (click)="copyToClipboard(posteResponse.data.filePath1)" title="Copiar URL">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="archivo-item" *ngIf="posteResponse.data.filePath2">
+            <div class="archivo-header">
+              <i class="fas fa-file"></i>
+              <span class="archivo-title">Archivo 2</span>
+              <div class="archivo-status-badge active">Disponible</div>
+            </div>
+            <div class="archivo-url">
+              <input type="text" [value]="posteResponse.data.filePath2" readonly class="url-input">
+              <div class="archivo-actions">
+                <button type="button" class="action-btn view-btn" (click)="viewFile(posteResponse.data.filePath2)" title="Ver archivo">
+                  <i class="fas fa-external-link-alt"></i>
+                </button>
+                <button type="button" class="action-btn copy-btn" (click)="copyToClipboard(posteResponse.data.filePath2)" title="Copiar URL">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="archivo-item" *ngIf="posteResponse.data.filePath3">
+            <div class="archivo-header">
+              <i class="fas fa-file"></i>
+              <span class="archivo-title">Archivo 3</span>
+              <div class="archivo-status-badge active">Disponible</div>
+            </div>
+            <div class="archivo-url">
+              <input type="text" [value]="posteResponse.data.filePath3" readonly class="url-input">
+              <div class="archivo-actions">
+                <button type="button" class="action-btn view-btn" (click)="viewFile(posteResponse.data.filePath3)" title="Ver archivo">
+                  <i class="fas fa-external-link-alt"></i>
+                </button>
+                <button type="button" class="action-btn copy-btn" (click)="copyToClipboard(posteResponse.data.filePath3)" title="Copiar URL">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información del Sistema -->
+      <div class="data-section">
+        <div class="section-header">
+          <i class="fas fa-server"></i>
+          <h4>Información del Sistema</h4>
+        </div>
+        <div class="data-grid">
+          <div class="data-item">
+            <label>Panorama ID:</label>
+            <span class="value technical">{{ posteResponse.data.panoramasId }}</span>
+          </div>
+          <div class="data-item">
+            <label>View Capture Path:</label>
+            <span class="value technical">{{ posteResponse.data.viewCapturePath }}</span>
+          </div>
+          <div class="data-item" *ngIf="posteResponse.data.posteSiguiente">
+            <label>Poste Siguiente:</label>
+            <span class="value">{{ posteResponse.data.posteSiguiente }}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Mostrar errores si existen -->
+    <div class="errors-container" *ngIf="posteResponse.errors">
+      <div class="section-header error">
+        <i class="fas fa-exclamation-circle"></i>
+        <h4>Errores</h4>
+      </div>
+      <pre class="error-text">{{ posteResponse.errors | json }}</pre>
+    </div>
+
+  </div>
+
+  <!-- Footer con acciones -->
+  <div class="viewer-footer" *ngIf="!loading && posteResponse?.isSucces">
+    <div class="footer-actions">
+      <button type="button" class="action-btn secondary" (click)="refreshData()" [disabled]="loading">
+        <i class="fas fa-sync-alt"></i>
+        <span>Actualizar</span>
+      </button>
+      <button type="button" class="action-btn primary" (click)="closePanel()">
+        <i class="fas fa-check"></i>
+        <span>Entendido</span>
+      </button>
+    </div>
+
+  </div>
+
+</div>

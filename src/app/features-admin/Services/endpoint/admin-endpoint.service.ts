@@ -16,7 +16,7 @@ import {catchError, tap, timeout} from "rxjs/operators";
   providedIn: 'root'
 })
 export class AdminEndpointService {
-  private readonly apiUrl = 'https://localhost:44331/api';
+  private readonly apiUrl = 'http://localhost:5277/api';
   private readonly timeoutDuration = 15000;
 
   // Caché para panoramas por locationId

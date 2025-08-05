@@ -13,7 +13,7 @@ import {AdminLayoutComponent} from "./features-admin/Layout/admin-layout/admin-l
 import {AdminDashboardComponent} from "./features-admin/Components/admin-dashboard/admin-dashboard.component";
 import {AllUsersComponent} from "./features-admin/Components/all-users/all-users.component";
 
-import {AuthGuard} from "./global-guards/guards";
+import {AdminGuard, AuthGuard, UserGuard} from "./global-guards/guards";
 
 import {AdminUsersComponent} from "./features-admin/Pages/admin-users/admin-users.component";
 import {AdminHotspotsComponent} from "./features-admin/Pages/admin-hotspots/admin-hotspots.component";
@@ -25,14 +25,17 @@ import {AdminUploaderComponent} from "./features-admin/Pages/admin-uploader/admi
 
 
 const routes: Routes = [
-  { path: '', redirectTo: '/user/login', pathMatch: 'full' },
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
 
-  { path: 'admin/login', component: AdminLoginComponent },
-  { path: 'user/login', component: LoginComponent },
+  // ✅ Rutas de LOGIN separadas
+  { path: 'login', component: LoginComponent },           // ← Para usuarios normales
+  { path: 'admin/login', component: AdminLoginComponent }, // ← Para administradores
 
-  { path: 'admin',
+  // ✅ Rutas de ADMIN - Solo AdminGuard (solo admins)
+  {
+    path: 'admin',
     component: AdminLayoutComponent,
-    canActivate: [AuthGuard],
+    canActivate: [AdminGuard], // ← Solo AdminAuthService
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: AdminUsersComponent },
@@ -44,32 +47,27 @@ const routes: Routes = [
       { path: 'image-uploader', component: AdminUploaderComponent }
     ]
   },
-  { path: 'user',
-    component: DashboardComponent,
-    canActivate: [AuthGuard],
-    children: [
-      { path: '', redirectTo: 'users', pathMatch: 'full' },
-      { path: 'dashboard', redirectTo: 'users', pathMatch: 'full' }
-    ]
-  },
 
-  { path: 'login', component: LoginComponent },
+  // ✅ Rutas de USUARIO - UserGuard (usuarios O admins)
   {
     path: 'dashboard',
     component: DashboardComponent,
-    canActivate: [AuthGuard], },
-  { path: 'map/:id', component:  DashboardComponent },
-  { path: 'map-test/:id', component:  DashboardComponent },
-  { path: 'viewer', component: HomeComponent },
-  { path: 'vr/:id',
-    component: VrComponent,
-    canActivate: [AuthGuard]
+    canActivate: [UserGuard] // ← AuthService O AdminAuthService
   },
-  { path: 'admin/login', component: AdminLoginComponent },
+  {
+    path: 'vr/:id',
+    component: VrComponent,
+    canActivate: [UserGuard] // ← AuthService O AdminAuthService
+  },
 
+  // ✅ Rutas públicas o con guards específicos
+  { path: 'map/:id', component: DashboardComponent },
+  { path: 'map-test/:id', component: DashboardComponent },
+  { path: 'viewer', component: HomeComponent },
 
-
+  { path: '**', redirectTo: '/login' }
 ];
+
 
 @NgModule({
   imports: [RouterModule.forRoot(routes, { onSameUrlNavigation: 'reload' })],

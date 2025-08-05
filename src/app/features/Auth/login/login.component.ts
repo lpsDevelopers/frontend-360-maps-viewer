@@ -1,11 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { EndpointService } from '../../Services/endpoint/endpoint.service';
-import { AuthService } from '../../Services/auth/auth.service';
-import { User, LoginResponse } from '../../Model/types';
-import { jwtDecode } from 'jwt-decode';
+import { LoginResponse } from '../../Model/types';
 import { Router, ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import {LoadingService} from "../../Services/loading/loading.service";
+import {AuthService} from "../../Services/auth/auth.service";
 
 @Component({
   selector: 'app-login',
@@ -13,12 +12,14 @@ import {LoadingService} from "../../Services/loading/loading.service";
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent implements OnInit {
+
   email: string = '';
   password: string = '';
   message: string = '';
   isLoading: boolean = false;
   messageType: 'error' | 'success' | '' = '';
   loading = false;
+
   constructor(
     private endPointService: EndpointService,
     private authService: AuthService,
@@ -28,15 +29,14 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Redirigir si ya está autenticado
 
     if (this.authService.isAuthenticated()) {
-      this.router.navigate(['/dashboard']); // Redirige al dashboard si ya está autenticado
+      this.router.navigate(['/dashboard']);
     }
   }
 
   login() {
-    if (this.isLoading) return; // Prevenir múltiples clicks
+    if (this.isLoading) return;
 
     if (!this.validateForm()) return;
 
@@ -99,15 +99,15 @@ export class LoginComponent implements OnInit {
   }
 
   private handleSuccessfulLogin(response: LoginResponse): void {
-    console.log('Respuesta completa del login:', response); // 👈 Este debería salir siempre
-  
+    console.log('Respuesta completa del login:', response);
+
     try {
       if (!response.isSucces || !response.data || typeof response.data !== 'string') {
         throw new Error('Token no válido en la respuesta');
       }
-  
-      this.authService.login(response); // solo esto
-  
+
+      this.authService.login(response);
+
       this.showSuccess('Inicio de sesión exitoso');
       this.router.navigate(['/dashboard']);
     } catch (error) {
@@ -115,8 +115,8 @@ export class LoginComponent implements OnInit {
       this.showError('Error procesando la respuesta del servidor');
     }
   }
-  
-  
+
+
 
   private handleLoginError(error: any): void {
     console.error('Error en login:', error);

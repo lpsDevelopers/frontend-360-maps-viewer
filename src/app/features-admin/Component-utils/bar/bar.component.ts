@@ -114,7 +114,6 @@ export class BarComponent implements OnInit {
 
   logout() {
     this.authService.logout();
-    this.router.navigate(['/login']);
   }
 
   // Método para obtener las clases CSS del contenedor

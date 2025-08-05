@@ -10,6 +10,7 @@ export class AuthInterceptor implements HttpInterceptor {
   constructor(private authService: AdminAuthService ) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+
     if (this.isPublicRoute(request.url)) {
       return next.handle(request);
     }
